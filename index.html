@@ -126,7 +126,13 @@
   .modal .msub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-  .field input, .field select { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 8px 10px; font-size: 14px; }
+  .field input, .field select, .field textarea { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 8px 10px; font-size: 14px; font-family: inherit; }
+  .field textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+  .chip { display: inline-block; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.on { background: rgba(88,166,255,.15); border-color: var(--accent); color: var(--accent); }
+  .opt-box { background: var(--panel-2); border-radius: 10px; padding: 14px; flex: 1; min-width: 240px; }
+  .opt-box .ot { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 10px; }
   .field .fhint { font-size: 11px; color: var(--muted); margin-top: 3px; }
   .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 10px; }
   .btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -203,8 +209,8 @@
       <div class="stat-grid" id="ov-stats" style="margin-top:16px"></div>
     </div>
 
-    <div class="card" id="alerts-card" style="display:none; border-color: rgba(248,81,73,.45);">
-      <h2 style="color: var(--red);">Needs attention</h2>
+    <div class="card" id="alerts-card" style="border-color: rgba(248,81,73,.45);">
+      <h2 style="color: var(--red);">Needs attention <span class="add-link" style="margin-left:auto" onclick="openEditor('alerts')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add</span></h2>
       <div id="alerts"></div>
     </div>
 
@@ -245,7 +251,8 @@
 <section class="page" id="page-mortgage">
   <div class="grid">
     <div class="card span-all">
-      <h2>Mortgage — 10 Parsons Hall <span class="tag" id="mort-lender"></span></h2>
+      <h2>Mortgage — 10 Parsons Hall <span class="tag" id="mort-lender"></span>
+        <span class="add-link" style="margin-left:auto" onclick="openEditor('mortgage', DATA.goals.indexOf(mortgageGoal()))"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>edit details</span></h2>
       <div class="stat-grid" id="mort-stats"></div>
     </div>
 
@@ -258,6 +265,11 @@
       <h2>Balance projection</h2>
       <div id="mort-chart"></div>
       <div class="gnotes" id="mort-chart-note"></div>
+    </div>
+
+    <div class="card span-all">
+      <h2>August 2027 — rate rollover planner <span class="tag">fixed rate ends · penalty-free lump sum</span></h2>
+      <div id="rollover"></div>
     </div>
   </div>
 </section>
@@ -298,7 +310,7 @@
     </div>
 
     <div class="card" id="energy-card" style="display:none;">
-      <h2 id="energy-title">Energy</h2>
+      <h2><span id="energy-title">Energy</span> <span class="add-link" style="margin-left:auto" onclick="openEditor('energy')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add bill</span></h2>
       <div class="chart" id="energy-chart"></div>
       <div class="total-line" id="energy-summary"></div>
       <div class="gnotes" id="energy-note"></div>
@@ -310,12 +322,12 @@
 <section class="page" id="page-goals">
   <div class="grid">
     <div class="card">
-      <h2>Goals</h2>
+      <h2>Goals <span class="add-link" style="margin-left:auto" onclick="openEditor('goals')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add goal</span></h2>
       <div id="goals"></div>
     </div>
 
-    <div class="card" id="opps-card" style="display:none; border-color: rgba(63,185,80,.45);">
-      <h2 style="color: var(--green);">Opportunities <span class="tag" id="opps-total"></span></h2>
+    <div class="card" id="opps-card" style="border-color: rgba(63,185,80,.45);">
+      <h2 style="color: var(--green);">Opportunities <span class="tag" id="opps-total"></span> <span class="add-link" style="margin-left:auto" onclick="openEditor('opps')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add</span></h2>
       <div id="opps"></div>
     </div>
   </div>
@@ -753,6 +765,79 @@ function renderMortgage() {
     : 'Balance on the current schedule. Add an overpayment in the calculator to compare trajectories.';
 }
 
+function renderRollover() {
+  const g = mortgageGoal();
+  if (!g) return;
+  const now = new Date();
+  const roll = new Date(2027, 7, 1); // August 2027
+  const mTo = Math.max(0, (roll.getFullYear() - now.getFullYear()) * 12 + (roll.getMonth() - now.getMonth()));
+  const r0 = (g.rate / 100) / 12;
+  let B = g.balance;
+  for (let i = 0; i < mTo; i++) B = B * (1 + r0) - (g.monthlyRepayment + (g.overpay || 0));
+  B = Math.max(0, B);
+
+  const lump = g.rolloverLump || 0;
+  const refixPct = g.rolloverRate ?? g.rate;
+  const rr = (refixPct / 100) / 12;
+  const termLeft = 191; // Aug 2027 → Jul 2043
+  const payAt = (bal, r, n) => bal * r / (1 - Math.pow(1 + r, -n));
+  const baseInterest = payAt(B, rr, termLeft) * termLeft - B;
+
+  const presets = [0, 50000, 100000, 150000, 300000, 350000];
+  const chips = presets.map(p =>
+    `<button class="chip ${lump === p ? 'on' : ''}" onclick="updateMortgage('rolloverLump','${p}')">${p === 0 ? 'none' : '€' + (p / 1000) + 'k'}</button>`).join(' ');
+
+  let result;
+  if (lump >= B) {
+    const spare = lump - B;
+    result = `<div class="opt-box" style="border:1px solid rgba(63,185,80,.4)">
+      <div class="ot" style="color:var(--green)">Mortgage cleared entirely</div>
+      <div style="font-size:14px;line-height:1.7">Pays off the full <b>${fmtEur(B)}</b> with <b>${fmtEur(spare)}</b> left over.<br>
+      <b style="color:var(--green)">${fmtMoney(g.monthlyRepayment, 'EUR')}/month back in your pockets</b> — €${Math.round(g.monthlyRepayment * 12 / 100) / 10}k a year.<br>
+      Interest avoided vs keeping the schedule: <b>${fmtEur(baseInterest)}</b>.</div>
+    </div>`;
+  } else if (lump > 0) {
+    const rem = B - lump;
+    const newPay = payAt(rem, rr, termLeft);
+    const intA = newPay * termLeft - rem;
+    const n2 = monthsToClear(rem, rr, g.monthlyRepayment);
+    const intB = isFinite(n2) ? g.monthlyRepayment * n2 - rem : null;
+    const yrsEarly = isFinite(n2) ? ((termLeft - n2) / 12) : 0;
+    result = `<div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div class="opt-box">
+        <div class="ot">Option A — free up monthly cash</div>
+        <div style="font-size:13px;line-height:1.8">Remaining mortgage: <b>${fmtEur(rem)}</b><br>
+        New repayment: <b>${fmtEur(newPay)}</b>/mo<br>
+        <b style="color:var(--green)">Frees ${fmtEur(g.monthlyRepayment - newPay)}/month</b><br>
+        Interest over the 16 yrs: ${fmtEur(intA)} <span class="hint-edit">(saves ${fmtEur(baseInterest - intA)})</span></div>
+      </div>
+      <div class="opt-box">
+        <div class="ot">Option B — keep paying, finish early</div>
+        <div style="font-size:13px;line-height:1.8">Same ${fmtEur(g.monthlyRepayment)}/mo repayment<br>
+        Mortgage-free: <b style="color:var(--green)">${payoffLabel(mTo + n2)}</b> — ${yrsEarly.toFixed(1)} yrs early<br>
+        Interest: ${fmtEur(intB)} <span class="hint-edit">(saves ${fmtEur(baseInterest - intB)})</span><br>
+        <span class="hint-edit">Nothing freed monthly until it clears.</span></div>
+      </div>
+    </div>`;
+  } else {
+    result = `<div class="hint-edit" style="padding:6px 0">Pick a lump sum above to compare the two routes — or type an exact figure. Doing nothing: ~${fmtEur(baseInterest)} interest over the remaining term at ${refixPct}%.</div>`;
+  }
+
+  document.getElementById('rollover').innerHTML = `
+    <div class="stat-grid" style="margin-bottom:14px">
+      <div class="stat" style="cursor:default"><div class="sl">Balance at rollover</div><div class="sv">${fmtEur(B)}</div><div class="sd">projected, Aug 2027</div></div>
+      <div class="stat" style="cursor:default"><div class="sl">Break penalty then</div><div class="sv" style="color:var(--green)">€0</div><div class="sd">fixed term is over</div></div>
+      <div class="stat" style="cursor:default"><div class="sl">Term left</div><div class="sv">~16 yrs</div><div class="sd">to Jul 2043</div></div>
+      <div class="stat" style="cursor:default"><div class="sl">Refix rate guess</div><div class="sv">% <input class="units-input" style="width:64px" type="number" step="0.05" value="${refixPct}" onchange="updateMortgage('rolloverRate',this.value)"></div><div class="sd">unknown until 2027 — try a few</div></div>
+    </div>
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:13px">Lump sum:</span> ${chips}
+      <span style="font-size:13px">or € <input class="units-input" style="width:100px" type="number" step="5000" value="${lump || ''}" placeholder="exact" onchange="updateMortgage('rolloverLump',this.value)"></span>
+    </div>
+    ${result}
+    <div class="gnotes" style="margin-top:12px">Context: the apartment could sell for <b>€300–350k</b> (undecided). €300k would leave ~${fmtEur(Math.max(0, B - 300000))} of mortgage; €350k clears it${B < 350000 ? ' with change to spare' : ''}. Before then: fill PRSA tax-relief headroom first (beats mortgage payoff), keep a 6-month cash buffer, and if a house move is on the cards the lump may serve better as the next deposit. Everything here saves for both of you.</div>`;
+}
+
 function renderGoals() {
   const goals = (DATA.goals || []).filter(g => g.type !== 'mortgage');
   const g0 = mortgageGoal();
@@ -768,9 +853,9 @@ function renderGoals() {
     const gi = DATA.goals.indexOf(g);
     if (g.type === 'checklist') {
       const done = g.steps.filter(s => s.done).length;
-      const pct = goalPct(done / g.steps.length);
+      const pct = goalPct(done / (g.steps.length || 1));
       return `<div class="goal">
-        <div class="gname"><span>${g.title}</span><span class="pct">${done}/${g.steps.length} steps</span></div>
+        <div class="gname" style="cursor:pointer" onclick="openEditor('goals',${gi})" title="Tap to edit this goal"><span>${g.title}</span><span class="pct">${done}/${g.steps.length} steps</span></div>
         <div class="bar"><i style="width:${pct}%"></i></div>
         ${g.steps.map((s, si) => `<label class="check ${s.done ? 'done' : ''}"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleStep(${gi},${si},this.checked)"><span>${s.label}</span></label>`).join('')}
         ${g.notes ? `<div class="gnotes">${g.notes}</div>` : ''}
@@ -779,11 +864,11 @@ function renderGoals() {
     const cur = portfolioUsd();
     const pct = g.target ? goalPct(cur / g.target) : 0;
     return `<div class="goal">
-      <div class="gname"><span>${g.title}</span><span class="pct">${g.target ? pct + '%' : ''}</span></div>
+      <div class="gname" style="cursor:pointer" onclick="openEditor('goals',${gi})" title="Tap to edit this goal"><span>${g.title}</span><span class="pct">${g.target ? pct + '%' : ''}</span></div>
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="meta">
         <span><b style="color:var(--text)">${fmtUsd(cur)}</b> now</span>
-        <span>target $ <input class="units-input" type="number" value="${g.target ?? ''}" placeholder="50000" onchange="updateGoal(${gi},'target',this.value)"></span>
+        <span>target $ <input class="units-input" type="number" value="${g.target ?? ''}" placeholder="50000" onclick="event.stopPropagation()" onchange="updateGoal(${gi},'target',this.value)"></span>
         <span>tracks live prices</span>
       </div>
     </div>`;
@@ -859,27 +944,22 @@ function render() {
   renderHoldings();
   renderInvestCharts();
   renderMortgage();
+  renderRollover();
   renderGoals();
   renderOverview();
   renderCashflow();
 
-  if (DATA.alerts && DATA.alerts.length) {
-    document.getElementById('alerts-card').style.display = '';
-    document.getElementById('alerts').innerHTML = DATA.alerts.map(a => `<div class="row">
-        <div><div class="name">${a.title}</div><div class="detail">${a.detail}</div></div>
-      </div>`).join('');
-  } else {
-    document.getElementById('alerts-card').style.display = 'none';
-  }
+  renderList('alerts', DATA.alerts || [], (a, i) => `<div class="row editable" onclick="openEditor('alerts',${i})">
+      <div><div class="name">${a.title}</div><div class="detail">${a.detail}</div></div>
+    </div>`);
+  if (!(DATA.alerts || []).length) document.getElementById('alerts').innerHTML =
+    '<div class="empty">Nothing needs attention right now.</div>';
 
-  if (DATA.opportunities && DATA.opportunities.length) {
-    document.getElementById('opps-card').style.display = '';
-    document.getElementById('opps').innerHTML = DATA.opportunities.map(o => `<div class="row">
-        <div><div class="name">${o.title}</div><div class="detail">${o.detail}</div></div>
-        ${o.saving ? `<div class="right"><span class="badge ok">${o.saving}</span></div>` : ''}
-      </div>`).join('');
-    if (DATA.opportunitiesNote) document.getElementById('opps-total').textContent = DATA.opportunitiesNote;
-  }
+  renderList('opps', DATA.opportunities || [], (o, i) => `<div class="row editable" onclick="openEditor('opps',${i})">
+      <div><div class="name">${o.title}</div><div class="detail">${o.detail}</div></div>
+      ${o.saving ? `<div class="right"><span class="badge ok">${o.saving}</span></div>` : ''}
+    </div>`);
+  if (DATA.opportunitiesNote) document.getElementById('opps-total').textContent = DATA.opportunitiesNote;
 
   const bills = (DATA.bills || []).map((b, i) => ({ ...b, _i: i, _next: b.nextDue || nextDue(b.dueDay) }))
     .sort((a, b) => (daysUntil(a._next) ?? 999) - (daysUntil(b._next) ?? 999));
@@ -1019,6 +1099,63 @@ const SCHEMAS = {
       { key: 'notes', label: 'Notes', type: 'text', ph: 'where to renew, how long it takes…' },
     ],
   },
+  mortgage: {
+    title: 'Mortgage details', arr: () => DATA.goals, noDelete: true,
+    fields: [
+      { key: 'balance', label: 'Current balance €', type: 'number' },
+      { key: 'rate', label: 'Interest rate %', type: 'number', hint: 'update this when you refix in Aug 2027' },
+      { key: 'monthlyRepayment', label: 'Monthly repayment €', type: 'number' },
+      { key: 'interestYtd', label: 'Interest paid this year €', type: 'number' },
+      { key: 'lender', label: 'Lender', type: 'text' },
+      { key: 'account', label: 'Account number', type: 'text' },
+    ],
+  },
+  goals: {
+    title: 'Goal', arr: () => (DATA.goals = DATA.goals || []),
+    fields: [
+      { key: 'title', label: 'Goal', type: 'text', ph: 'e.g. Sell the apartment' },
+      { key: 'type', label: 'Type', type: 'select', options: [['checklist', 'Checklist (steps to tick off)'], ['portfolio', 'Portfolio target (tracks investments)']] },
+      { key: 'steps', label: 'Steps — one per line (checklist only)', type: 'textarea', ph: 'Get valuations\nInstruct solicitor\n…', fromItem: it => (it.steps || []).map(s => s.label).join('\n'), hint: 'Ticks are kept for steps whose wording stays the same.' },
+      { key: 'target', label: 'Target $ (portfolio only)', type: 'number' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+    transform: (obj, old) => {
+      if (obj.type === 'checklist') {
+        const lines = String(obj.steps || '').split('\n').map(s => s.trim()).filter(Boolean);
+        obj.steps = lines.map(l => ({ label: l, done: !!((old && old.steps) || []).find(s => s.label === l && s.done) }));
+        delete obj.target;
+      } else {
+        delete obj.steps;
+      }
+      return obj;
+    },
+  },
+  alerts: {
+    title: 'Attention item', arr: () => (DATA.alerts = DATA.alerts || []),
+    fields: [
+      { key: 'title', label: 'Headline', type: 'text', ph: 'What needs attention?' },
+      { key: 'detail', label: 'Detail', type: 'textarea', ph: 'What, why, and what to do about it' },
+    ],
+  },
+  opps: {
+    title: 'Opportunity', arr: () => (DATA.opportunities = DATA.opportunities || []),
+    fields: [
+      { key: 'title', label: 'Headline', type: 'text', ph: 'e.g. Switch broadband provider' },
+      { key: 'detail', label: 'Detail', type: 'textarea' },
+      { key: 'saving', label: 'Potential saving', type: 'text', ph: 'e.g. ~€120/yr' },
+    ],
+  },
+  energy: {
+    title: 'Energy bill', arr: () => ((DATA.energy = DATA.energy || { title: 'Energy', history: [] }).history),
+    fields: [
+      { key: 'label', label: 'Bill label', type: 'text', ph: 'e.g. Sep 26' },
+      { key: 'period', label: 'Billing period', type: 'text', ph: 'e.g. 12 May – 10 Jul 26' },
+      { key: 'days', label: 'Days in period', type: 'number' },
+      { key: 'kwh', label: 'Usage (kWh)', type: 'number' },
+      { key: 'total', label: 'Total €', type: 'number' },
+      { key: 'reading', label: 'Reading type', type: 'select', options: [['meter read', 'Meter read'], ['estimated', 'Estimated']] },
+    ],
+  },
   income: {
     title: 'Income', arr: () => (DATA.income = DATA.income || []),
     fields: [
@@ -1032,7 +1169,7 @@ const SCHEMAS = {
     ],
   },
 };
-const NUMERIC = new Set(['amount', 'units', 'costUsd', 'value', 'dueDay']);
+const NUMERIC = new Set(['amount', 'units', 'costUsd', 'value', 'dueDay', 'target', 'balance', 'rate', 'monthlyRepayment', 'interestYtd', 'days', 'kwh', 'total']);
 let editCtx = null;
 
 function openEditor(section, index) {
@@ -1043,13 +1180,17 @@ function openEditor(section, index) {
   document.getElementById('modal-title').textContent = (editing ? 'Edit ' : 'Add ') + schema.title.toLowerCase();
   document.getElementById('modal-sub').textContent = editing ? 'Update or delete this entry — saves for the whole household.' : 'Fill in what you know — you can leave fields blank.';
   document.getElementById('modal-fields').innerHTML = schema.fields.map(f => {
-    const val = item[f.key] ?? (f.type === 'select' ? f.options[0][0] : '');
+    let val = item[f.key] ?? (f.type === 'select' ? f.options[0][0] : '');
+    if (f.fromItem) val = f.fromItem(item) ?? '';
+    const esc = String(val).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
     const input = f.type === 'select'
       ? `<select id="f_${f.key}">${f.options.map(o => `<option value="${o[0]}" ${o[0] === val ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>`
-      : `<input id="f_${f.key}" type="${f.type}" ${f.type === 'number' ? 'step="any"' : ''} value="${String(val).replace(/"/g, '&quot;')}" placeholder="${f.ph || ''}">`;
+      : f.type === 'textarea'
+      ? `<textarea id="f_${f.key}" placeholder="${f.ph || ''}">${esc}</textarea>`
+      : `<input id="f_${f.key}" type="${f.type}" ${f.type === 'number' ? 'step="any"' : ''} value="${esc}" placeholder="${f.ph || ''}">`;
     return `<div class="field"><label>${f.label}</label>${input}${f.hint ? `<div class="fhint">${f.hint}</div>` : ''}</div>`;
   }).join('');
-  document.getElementById('modal-delete').style.visibility = editing ? 'visible' : 'hidden';
+  document.getElementById('modal-delete').style.visibility = (editing && !schema.noDelete) ? 'visible' : 'hidden';
   document.getElementById('modal').classList.add('open');
 }
 function closeEditor() { document.getElementById('modal').classList.remove('open'); editCtx = null; }
@@ -1063,8 +1204,10 @@ function saveEditor() {
     else obj[f.key] = raw === '' ? (f.key === 'currency' ? 'EUR' : undefined) : raw;
   }
   const arr = schema.arr();
-  if (editCtx.index != null) arr[editCtx.index] = { ...arr[editCtx.index], ...obj };
-  else arr.push(schema.make ? schema.make(obj) : obj);
+  const old = editCtx.index != null ? arr[editCtx.index] : null;
+  const finalObj = schema.transform ? schema.transform(obj, old) : obj;
+  if (editCtx.index != null) arr[editCtx.index] = { ...old, ...finalObj };
+  else arr.push(schema.make ? schema.make(finalObj) : finalObj);
   const wasHoldings = editCtx.section === 'holdings';
   closeEditor();
   save();
