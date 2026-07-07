@@ -287,8 +287,14 @@
     </div>
 
     <div class="card">
-      <h2>Contracts &amp; Renewals</h2>
+      <h2>Contracts &amp; Renewals <span class="add-link" style="margin-left:auto" onclick="openEditor('contracts')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add</span></h2>
       <div id="contracts"></div>
+    </div>
+
+    <div class="card">
+      <h2>Life Admin &amp; Renewals <span class="add-link" style="margin-left:auto" onclick="openEditor('renewals')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add item</span></h2>
+      <div id="renewals"></div>
+      <div class="gnotes" style="margin-top:10px">Passports, licences, NCT, services — tap any row to set its date. Amber from 4 months out, red inside 30 days, so there's always time to act.</div>
     </div>
 
     <div class="card" id="energy-card" style="display:none;">
@@ -365,6 +371,23 @@ async function fetchEnc() {
   return r.json();
 }
 
+// Seeded once in code — appears for the whole household, saves to the shared
+// store on first edit. Dates are yours to fill in (tap a row).
+const DEFAULT_RENEWALS = [
+  { label: 'Tim — passport', expiryDate: null, notes: 'renew online at passport.ie; allow ~3 weeks' },
+  { label: 'Fiona — passport', expiryDate: null, notes: 'renew online at passport.ie' },
+  { label: 'Kids — passports', expiryDate: null, notes: 'child passports last 5 years — add a row per child' },
+  { label: 'Tim — driving licence', expiryDate: null, notes: 'renew via NDLS' },
+  { label: 'Fiona — driving licence', expiryDate: null, notes: 'renew via NDLS' },
+  { label: 'Car — NCT', expiryDate: null, notes: 'every 2 years (annual once the car is 10+)' },
+  { label: 'Car — motor tax', expiryDate: null, notes: 'renew on motortax.ie' },
+  { label: 'Car — insurance renewal', expiryDate: null, notes: 'shop it ~3 weeks before renewal' },
+  { label: 'Car — service', expiryDate: null, notes: 'the annual check-up' },
+  { label: 'Home insurance renewal', expiryDate: null, notes: 'required by the mortgage — shop it yearly' },
+  { label: 'TV licence', expiryDate: null, notes: 'annual' },
+  { label: 'Boiler service', expiryDate: null, notes: 'annual gas boiler service — keeps the warranty + safety cert' },
+];
+
 async function unlock() {
   const pw = document.getElementById('pw').value;
   const err = document.getElementById('pw-error');
@@ -385,6 +408,7 @@ async function unlock() {
     AES_KEY = key; SALT_B64 = ENC.salt;
     AUTH_TOKEN = await deriveAuthToken(pw);
     DATA = payload.data;
+    if (!DATA.renewals || !DATA.renewals.length) DATA.renewals = DEFAULT_RENEWALS.map(x => ({ ...x }));
     document.getElementById('lock').style.display = 'none';
     showTab(location.hash.slice(1) || 'overview');
     render();
@@ -463,6 +487,15 @@ function dueBadge(days) {
   if (days <= 7) return `<span class="badge urgent">in ${days}d</span>`;
   if (days <= 30) return `<span class="badge soon">in ${days}d</span>`;
   return `<span class="badge ok">in ${days}d</span>`;
+}
+// renewals get longer runway than bills: red inside 30 days, amber inside 4 months
+function renewBadge(days) {
+  if (days == null) return '<span class="badge na">set date</span>';
+  if (days < 0) return `<span class="badge urgent">expired ${-days}d ago</span>`;
+  if (days <= 30) return `<span class="badge urgent">in ${days}d</span>`;
+  if (days <= 120) return `<span class="badge soon">in ~${Math.round(days / 30)} mo</span>`;
+  if (days <= 365) return `<span class="badge ok">in ~${Math.round(days / 30)} mo</span>`;
+  return `<span class="badge ok">in ${(days / 365).toFixed(1)}y</span>`;
 }
 function nextDue(dueDay) {
   if (!dueDay) return null;
@@ -887,10 +920,18 @@ function render() {
     document.getElementById('energy-note').textContent = e.note || '';
   }
 
-  const contracts = [...(DATA.contracts || [])].sort((a, b) => (daysUntil(a.endDate) ?? 999) - (daysUntil(b.endDate) ?? 999));
-  renderList('contracts', contracts, c => `<div class="row">
+  const contracts = (DATA.contracts || []).map((c, i) => ({ ...c, _i: i }))
+    .sort((a, b) => (daysUntil(a.endDate) ?? 9999) - (daysUntil(b.endDate) ?? 9999));
+  renderList('contracts', contracts, c => `<div class="row editable" onclick="openEditor('contracts',${c._i})">
       <div><div class="name">${c.provider}</div><div class="detail">${[c.item, c.notes].filter(Boolean).join(' · ')}</div></div>
       <div class="right"><div class="amt">${c.endDate || ''}</div>${dueBadge(daysUntil(c.endDate))}</div>
+    </div>`);
+
+  const renewals = (DATA.renewals || []).map((r, i) => ({ ...r, _i: i }))
+    .sort((a, b) => (daysUntil(a.expiryDate) ?? 9999) - (daysUntil(b.expiryDate) ?? 9999));
+  renderList('renewals', renewals, r => `<div class="row editable" onclick="openEditor('renewals',${r._i})">
+      <div><div class="name">${r.label}</div><div class="detail">${r.notes || ''}</div></div>
+      <div class="right"><div class="amt">${r.expiryDate || ''}</div>${renewBadge(daysUntil(r.expiryDate))}</div>
     </div>`);
 
   renderList('subscriptions', DATA.subscriptions, (s, i) => `<div class="row editable" onclick="openEditor('subscriptions',${i})">
@@ -959,6 +1000,23 @@ const SCHEMAS = {
       { key: 'frequency', label: 'Frequency', type: 'select', options: [['monthly', 'Monthly'], ['annual', 'Annual']] },
       { key: 'dueDay', label: 'Charge day of month (1–31)', type: 'number' },
       { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
+  contracts: {
+    title: 'Contract / renewal', arr: () => (DATA.contracts = DATA.contracts || []),
+    fields: [
+      { key: 'provider', label: 'Provider', type: 'text', ph: 'e.g. SSE Airtricity' },
+      { key: 'item', label: 'What is it', type: 'text', ph: 'e.g. 1-yr dual fuel contract' },
+      { key: 'endDate', label: 'End / renewal date', type: 'date' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
+  renewals: {
+    title: 'Life admin item', arr: () => (DATA.renewals = DATA.renewals || []),
+    fields: [
+      { key: 'label', label: 'What is it', type: 'text', ph: 'e.g. Tim — passport, Car — NCT' },
+      { key: 'expiryDate', label: 'Expiry / due date', type: 'date' },
+      { key: 'notes', label: 'Notes', type: 'text', ph: 'where to renew, how long it takes…' },
     ],
   },
   income: {
