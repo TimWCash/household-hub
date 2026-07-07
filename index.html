@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cashman Household Finances</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2230;
+    --border: #2b3240;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --amber: #d29922;
+    --red: #f85149;
+    --orange: #f7931a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  .wrap {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh; padding: 28px 32px 60px;
+  }
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; max-width: 1400px; margin-left: auto; margin-right: auto; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 5px; animation: pulse 2.4s ease-in-out infinite; vertical-align: 1px; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+  .snapshot-banner { max-width: 1400px; margin: 0 auto 20px; background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 10px; padding: 11px 16px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+  .snapshot-banner b { color: var(--text); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; max-width: 1400px; margin: 0 auto; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .card h2 .tag { font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+  .networth { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+  .networth-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  .holding { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
+  .holding .name { font-weight: 600; font-size: 14px; }
+  .holding .detail { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .holding .value { font-weight: 700; font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
+  .holding .price { color: var(--muted); font-size: 12px; text-align: right; margin-top: 2px; }
+  .units-input { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 3px 6px; width: 90px; font-size: 12px; text-align: right; }
+  .btc-dot { color: var(--orange); }
+  .voo-dot { color: var(--red); }
+
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); gap: 10px; }
+  .row:first-of-type { border-top: none; }
+  .row .name { font-weight: 600; font-size: 14px; }
+  .row .detail { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .row .right { text-align: right; flex-shrink: 0; }
+  .row .amt { font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-top: 3px; }
+  .badge.ok { background: rgba(63,185,80,.15); color: var(--green); }
+  .badge.soon { background: rgba(210,153,34,.15); color: var(--amber); }
+  .badge.urgent { background: rgba(248,81,73,.15); color: var(--red); }
+  .badge.na { background: rgba(139,148,158,.15); color: var(--muted); }
+  .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+  .goal { padding: 14px 0; border-top: 1px solid var(--border); }
+  .goal:first-child { border-top: none; padding-top: 0; }
+  .goal .gname { font-weight: 600; font-size: 14px; display: flex; justify-content: space-between; align-items: baseline; }
+  .goal .pct { color: var(--green); font-weight: 700; font-size: 13px; }
+  .bar { height: 8px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin: 8px 0; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 999px; }
+  .goal .meta { color: var(--muted); font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .goal .gnotes { color: var(--muted); font-size: 12px; margin-top: 8px; line-height: 1.5; }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; cursor: pointer; }
+  .check input { accent-color: var(--green); cursor: pointer; }
+  .check.done span { color: var(--muted); text-decoration: line-through; }
+
+  .chart { display: flex; gap: 10px; align-items: flex-end; height: 130px; margin: 14px 0 4px; }
+  .cbar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; height: 100%; }
+  .cbar i { width: 100%; background: linear-gradient(180deg, var(--accent), #1f6feb); border-radius: 4px 4px 0 0; min-height: 3px; }
+  .cbar .cv { font-size: 11px; font-weight: 600; }
+  .cbar .cl { font-size: 10px; color: var(--muted); text-align: center; }
+  .total-line { display: flex; justify-content: space-between; padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .total-line b { color: var(--text); }
+  footer { max-width: 1400px; margin: 26px auto 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+  footer a { color: var(--accent); cursor: pointer; }
+
+  .add-link { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--accent); cursor: pointer; user-select: none;
+    display: inline-flex; align-items: center; gap: 5px; padding: 8px; margin: -8px; border-radius: 6px; transition: background .15s; }
+  .add-link:hover { background: var(--panel-2); }
+  .row.editable, .holding.editable { cursor: pointer; border-radius: 8px; transition: background .12s; }
+  .row.editable:hover, .holding.editable:hover { background: var(--panel-2); }
+  .row.editable { padding-left: 8px; padding-right: 8px; margin: 0 -8px; }
+  .hint-edit { font-size: 11px; color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 17px; margin-bottom: 4px; }
+  .modal .msub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .field input, .field select { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 8px 10px; font-size: 14px; }
+  .field .fhint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 10px; }
+  .btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #05070a; }
+  .btn.danger { color: var(--red); border: none; background: none; padding: 9px 4px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  #lock { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .lock-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 32px 28px; width: 100%; max-width: 380px; text-align: center; color: var(--text); }
+  .lock-card .lock-icon { font-size: 34px; margin-bottom: 12px; }
+  .lock-card h3 { font-size: 18px; margin-bottom: 6px; }
+  .lock-card p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 18px; }
+  .lock-card input { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 15px; margin-bottom: 12px; text-align: center; }
+  .lock-card .btn { width: 100%; }
+  #pw-error { color: var(--red); font-size: 12.5px; margin-top: 12px; min-height: 16px; }
+
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
+  .add-link svg { flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .wrap { padding: 18px 14px 48px; }
+    .networth { font-size: 30px; }
+    .row.editable { padding-top: 12px; padding-bottom: 12px; }
+    .check { padding: 6px 0; }
+    .btn { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div class="lock-card">
+    <div class="lock-icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <h3>Cashman Household Finances</h3>
+    <p>Private to Tim &amp; Fiona. Enter the household password — everything on this page is encrypted until the right password is entered.</p>
+    <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" placeholder="Password" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="btn primary" id="unlock-btn" onclick="unlock()">Unlock</button>
+    <div id="pw-error"></div>
+  </div>
+</div>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1 id="greeting">Cashman Household Finances</h1>
+    <div class="sub" id="today"></div>
+  </div>
+  <div style="text-align:right">
+    <div class="sub"><span class="live-dot"></span>Live</div>
+    <div class="sub" id="save-status"></div>
+  </div>
+</header>
+
+<div class="snapshot-banner" id="snapshot-banner"></div>
+
+<div class="grid">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2>Investments <span class="tag" id="price-time"></span> <span class="add-link" style="margin-left:auto" onclick="openEditor('holdings')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add investment</span></h2>
+    <div class="networth" id="networth">—</div>
+    <div class="networth-sub" id="networth-eur"></div>
+    <div id="holdings"></div>
+  </div>
+
+  <div class="card" id="goals-card" style="display:none;">
+    <h2>Goals</h2>
+    <div id="goals"></div>
+  </div>
+
+  <div class="card" id="alerts-card" style="display:none; border-color: rgba(248,81,73,.45);">
+    <h2 style="color: var(--red);">Needs attention</h2>
+    <div id="alerts"></div>
+  </div>
+
+  <div class="card" id="opps-card" style="display:none; border-color: rgba(63,185,80,.45);">
+    <h2 style="color: var(--green);">Opportunities <span class="tag" id="opps-total"></span></h2>
+    <div id="opps"></div>
+  </div>
+
+  <div class="card" id="cashflow-card" style="display:none;">
+    <h2>Income &amp; Cashflow <span class="tag">per month</span> <span class="add-link" style="margin-left:auto" onclick="openEditor('income')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add income</span></h2>
+    <div id="cashflow-summary"></div>
+    <div id="income"></div>
+  </div>
+
+  <div class="card">
+    <h2>Next 30 Days</h2>
+    <div id="upcoming"></div>
+  </div>
+
+  <div class="card" id="energy-card" style="display:none;">
+    <h2 id="energy-title">Energy</h2>
+    <div class="chart" id="energy-chart"></div>
+    <div class="total-line" id="energy-summary"></div>
+    <div class="gnotes" id="energy-note"></div>
+  </div>
+
+  <div class="card">
+    <h2>Bills <span class="add-link" style="margin-left:auto" onclick="openEditor('bills')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add bill</span></h2>
+    <div id="bills"></div>
+  </div>
+
+  <div class="card">
+    <h2>Contracts &amp; Renewals</h2>
+    <div id="contracts"></div>
+  </div>
+
+  <div class="card">
+    <h2>Subscriptions <span class="add-link" style="margin-left:auto" onclick="openEditor('subscriptions')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add</span></h2>
+    <div id="subscriptions"></div>
+  </div>
+</div>
+
+<footer id="footer"></footer>
+</div>
+
+<div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeEditor()">
+  <div class="modal">
+    <h3 id="modal-title"></h3>
+    <div class="msub" id="modal-sub"></div>
+    <div id="modal-fields"></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="modal-delete" onclick="deleteCurrent()" style="visibility:hidden">Delete</button>
+      <div style="display:flex;gap:10px;margin-left:auto">
+        <button class="btn" onclick="closeEditor()">Cancel</button>
+        <button class="btn primary" onclick="saveEditor()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- live household dashboard ----
+// Data is end-to-end encrypted: the server stores only AES-256-GCM ciphertext.
+// The key is derived from the household password in the browser (PBKDF2, 310k iters).
+// Writes are authorised by a separate password-derived token — the server never sees the password.
+const BASE = 'https://uiwoysyttalpfhljaoop.supabase.co/functions/v1/household';
+let ENC = null;            // {salt, iv, ct} fetched from server
+let SALT_B64 = null;       // kept for re-encryption on save
+let DATA = null, PRICES = null, AES_KEY = null, AUTH_TOKEN = null;
+
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+function toB64(buf) {
+  const u = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+async function deriveKey(pw, salt) {
+  const raw = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 310000, hash: 'SHA-256' }, raw,
+    { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function deriveAuthToken(pw) {
+  const raw = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode('cashman-auth-v1'), iterations: 310000, hash: 'SHA-256' }, raw, 256);
+  return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function fetchEnc() {
+  const r = await fetch(BASE + '/data', { cache: 'no-store' });
+  if (!r.ok) throw new Error('data ' + r.status);
+  return r.json();
+}
+
+async function unlock() {
+  const pw = document.getElementById('pw').value;
+  const err = document.getElementById('pw-error');
+  const btn = document.getElementById('unlock-btn');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Unlocking…';
+  const done = () => { btn.disabled = false; btn.textContent = 'Unlock'; };
+  try {
+    if (!ENC) ENC = await fetchEnc();
+  } catch (e) {
+    err.textContent = 'Could not reach the server — check your connection and try again.';
+    done();
+    return;
+  }
+  try {
+    const key = await deriveKey(pw, b64(ENC.salt));
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(ENC.iv) }, key, b64(ENC.ct));
+    const payload = JSON.parse(new TextDecoder().decode(plain));
+    AES_KEY = key;
+    SALT_B64 = ENC.salt;
+    AUTH_TOKEN = await deriveAuthToken(pw);
+    DATA = payload.data;
+    document.getElementById('lock').style.display = 'none';
+    render();
+    refreshPrices();
+    setInterval(refreshPrices, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshPrices(); });
+  } catch (e) {
+    err.textContent = "That's not the right password — check with Tim and try again.";
+    done();
+  }
+}
+
+function setStatus(msg, isError) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--muted)';
+  if (!isError && msg) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 2500);
+}
+
+let saveTimer = null;
+function save() {
+  // debounce rapid edits into one write
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(doSave, 400);
+}
+async function doSave() {
+  if (!AES_KEY || !AUTH_TOKEN) return;
+  setStatus('Saving…');
+  try {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, AES_KEY, new TextEncoder().encode(JSON.stringify({ data: DATA })));
+    const r = await fetch(BASE + '/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ salt: SALT_B64, iv: toB64(iv), ct: toB64(ct), token: AUTH_TOKEN }),
+    });
+    if (!r.ok) throw new Error('save ' + r.status);
+    setStatus('Saved ✓');
+  } catch (e) {
+    setStatus('Save failed — edits are only on this screen', true);
+  }
+}
+
+async function refreshPrices() {
+  if (!DATA) return;
+  const stocks = [...new Set(DATA.holdings.filter(h => h.kind === 'stock' && h.ref).map(h => h.ref))];
+  const coins = [...new Set(DATA.holdings.filter(h => h.kind === 'crypto' && h.ref).map(h => h.ref))];
+  try {
+    const r = await fetch(BASE + '/prices?stocks=' + encodeURIComponent(stocks.join(',')) + '&coins=' + encodeURIComponent(coins.join(',')), { cache: 'no-store' });
+    if (r.ok) { PRICES = await r.json(); renderHoldings(); renderGoals(); }
+  } catch (e) {}
+}
+
+const fmtUsd = n => n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const fmtUsd2 = n => n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const fmtEur = n => n == null ? '—' : n.toLocaleString('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const fmtMoney = (n, ccy) => n == null ? '' : n.toLocaleString('en-IE', { style: 'currency', currency: ccy || 'EUR' });
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  return Math.round((d - new Date().setHours(0,0,0,0)) / 86400000);
+}
+function dueBadge(days) {
+  if (days == null) return '<span class="badge na">no date</span>';
+  if (days < 0) return `<span class="badge urgent">${-days}d overdue</span>`;
+  if (days <= 7) return `<span class="badge urgent">in ${days}d</span>`;
+  if (days <= 30) return `<span class="badge soon">in ${days}d</span>`;
+  return `<span class="badge ok">in ${days}d</span>`;
+}
+function nextDue(dueDay) {
+  if (!dueDay) return null;
+  const now = new Date();
+  let d = new Date(now.getFullYear(), now.getMonth(), dueDay);
+  if (d < new Date(now.getFullYear(), now.getMonth(), now.getDate())) d = new Date(now.getFullYear(), now.getMonth() + 1, dueDay);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function holdingPrice(h) {
+  if (h.kind === 'manual') return null;
+  return PRICES && PRICES.prices ? (PRICES.prices[h.ref] ?? null) : null;
+}
+function holdingValueNative(h) {
+  if (h.kind === 'manual') return h.value ?? null;
+  const p = holdingPrice(h);
+  return p != null && h.units != null ? h.units * p : null;
+}
+function holdingCcy(h) {
+  if (h.kind === 'manual') return h.currency || 'USD';
+  return (PRICES && PRICES.currencies && PRICES.currencies[h.ref]) || 'USD';
+}
+function holdingValueUsd(h) {
+  const v = holdingValueNative(h);
+  if (v == null) return null;
+  if (holdingCcy(h) === 'EUR') {
+    return PRICES && PRICES.usdToEur ? v / PRICES.usdToEur : null;
+  }
+  return v;
+}
+const dotFor = h => `<span class="dot" style="background:${h.kind === 'crypto' ? 'var(--orange)' : h.kind === 'manual' ? 'var(--muted)' : 'var(--red)'}"></span>`;
+
+function renderHoldings() {
+  const el = document.getElementById('holdings');
+  let totalUsd = 0, anyPrice = false;
+  el.innerHTML = DATA.holdings.map((h, i) => {
+    const price = holdingPrice(h);
+    const valUsd = holdingValueUsd(h);
+    const valNative = holdingValueNative(h);
+    const ccy = holdingCcy(h);
+    if (valUsd != null) { totalUsd += valUsd; anyPrice = true; }
+    let gainHtml = '';
+    if (valNative != null && h.costUsd && ccy === 'USD') {
+      const gain = valNative - h.costUsd;
+      const gpct = (gain / h.costUsd) * 100;
+      const cls = gain >= 0 ? 'var(--green)' : 'var(--red)';
+      gainHtml = `<div class="price" style="color:${cls}">${gain >= 0 ? '+' : ''}${fmtUsd(gain)} (${gain >= 0 ? '+' : ''}${gpct.toFixed(1)}%)</div>`;
+    }
+    const priceLine = h.kind === 'manual' ? (ccy === 'EUR' ? 'euro value' : 'manual value')
+      : price != null ? fmtMoney(price, ccy) + ' / unit' : 'fetching price…';
+    const detail = h.kind === 'manual'
+      ? `<div class="detail">${h.ref || 'manually tracked'} — tap to edit</div>`
+      : `<div class="detail">units: <input class="units-input" type="number" step="any" value="${h.units ?? ''}" onclick="event.stopPropagation()" onchange="updateHolding(${i},'units',this.value)">
+          &nbsp; cost $ <input class="units-input" type="number" step="any" value="${h.costUsd ?? ''}" placeholder="total paid" onclick="event.stopPropagation()" onchange="updateHolding(${i},'costUsd',this.value)"></div>`;
+    return `<div class="holding editable" onclick="openEditor('holdings',${i})">
+      <div>
+        <div class="name">${dotFor(h)}${h.label}</div>
+        ${detail}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div>
+          <div class="value">${ccy === 'EUR' ? fmtEur(valNative) : fmtUsd(valNative)}</div>
+          <div class="price">${priceLine}</div>
+          ${gainHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('networth').textContent = anyPrice ? fmtUsd(totalUsd) : '—';
+  const eur = PRICES && PRICES.usdToEur ? totalUsd * PRICES.usdToEur : null;
+  document.getElementById('networth-eur').textContent = eur ? '≈ ' + fmtEur(eur) + ' · total across all holdings (mixed € + $)' : 'Fetching live prices…';
+  if (PRICES && PRICES.fetchedAt) document.getElementById('price-time').textContent = 'live · ' + new Date(PRICES.fetchedAt).toLocaleTimeString();
+}
+
+function portfolioUsd() {
+  if (!DATA) return 0;
+  return DATA.holdings.reduce((s, h) => s + (holdingValueUsd(h) || 0), 0);
+}
+function goalPct(p) { return Math.max(0, Math.min(100, Math.round(p * 100))); }
+
+function renderGoals() {
+  const goals = DATA.goals || [];
+  if (!goals.length) return;
+  document.getElementById('goals-card').style.display = '';
+  document.getElementById('goals').innerHTML = goals.map((g, gi) => {
+    if (g.type === 'checklist') {
+      const done = g.steps.filter(s => s.done).length;
+      const pct = goalPct(done / g.steps.length);
+      return `<div class="goal">
+        <div class="gname"><span>${g.title}</span><span class="pct">${done}/${g.steps.length} steps</span></div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        ${g.steps.map((s, si) => `<label class="check ${s.done ? 'done' : ''}"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleStep(${gi},${si},this.checked)"><span>${s.label}</span></label>`).join('')}
+        ${g.notes ? `<div class="gnotes">${g.notes}</div>` : ''}
+      </div>`;
+    }
+    if (g.type === 'mortgage') {
+      const r = (g.rate / 100) / 12;
+      const monthsToClear = (bal, pay) => {
+        if (pay <= bal * r) return Infinity;
+        return Math.log(pay / (pay - bal * r)) / Math.log(1 + r);
+      };
+      const base = monthsToClear(g.balance, g.monthlyRepayment);
+      const extra = g.overpay || 0;
+      const withX = monthsToClear(g.balance, g.monthlyRepayment + extra);
+      const baseInterest = g.monthlyRepayment * base - g.balance;
+      const withInterest = (g.monthlyRepayment + extra) * withX - g.balance;
+      const now = new Date();
+      const payoff = m => isFinite(m) ? new Date(now.getFullYear(), now.getMonth() + Math.ceil(m), 1).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' }) : '—';
+      const monthsSaved = isFinite(base) && isFinite(withX) ? Math.round(base - withX) : 0;
+      const interestSaved = isFinite(baseInterest) && isFinite(withInterest) ? baseInterest - withInterest : 0;
+      const yrs = m => `${Math.floor(m / 12)}y ${Math.round(m % 12)}m`;
+      const cap10 = Math.round((g.balance * 0.10) / 12);
+      return `<div class="goal">
+        <div class="gname"><span>${g.title}</span><span class="pct">${g.rate}% ${g.rateNote || ''}</span></div>
+        <div class="meta" style="margin:6px 0 10px">
+          <span>balance <b style="color:var(--text)">${fmtMoney(g.balance, 'EUR')}</b></span>
+          <span><b style="color:var(--text)">${fmtMoney(g.monthlyRepayment, 'EUR')}</b>/mo</span>
+          <span>${g.lender}</span>
+        </div>
+        <div style="background:var(--panel-2);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:13px">Overpay extra <b>€</b> <input class="units-input" type="number" min="0" step="50" value="${extra}" onchange="updateGoal(${gi},'overpay',this.value)"> /mo</span>
+            <span class="hint-edit">penalty-free up to ~€${cap10.toLocaleString()}/mo</span>
+          </div>
+          ${extra > 0 ? `<div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap">
+            <div><div class="hint-edit">Mortgage-free</div><div style="font-weight:700;color:var(--green)">${payoff(withX)}</div><div class="hint-edit">was ${payoff(base)}</div></div>
+            <div><div class="hint-edit">Time saved</div><div style="font-weight:700;color:var(--green)">${yrs(monthsSaved)}</div></div>
+            <div><div class="hint-edit">Interest saved</div><div style="font-weight:700;color:var(--green)">${fmtMoney(interestSaved, 'EUR')}</div></div>
+          </div>` : `<div class="hint-edit" style="margin-top:8px">Currently mortgage-free ${payoff(base)} · ~${fmtMoney(baseInterest, 'EUR')} interest left to pay. Enter an overpayment to see the effect.</div>`}
+        </div>
+        ${g.notes ? `<div class="gnotes">${g.notes}</div>` : ''}
+      </div>`;
+    }
+    const cur = portfolioUsd();
+    const pct = g.target ? goalPct(cur / g.target) : 0;
+    return `<div class="goal">
+      <div class="gname"><span>${g.title}</span><span class="pct">${g.target ? pct + '%' : ''}</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="meta">
+        <span><b style="color:var(--text)">${fmtUsd(cur)}</b> now</span>
+        <span>target $ <input class="units-input" type="number" value="${g.target ?? ''}" placeholder="50000" onchange="updateGoal(${gi},'target',this.value)"></span>
+        <span>tracks live prices</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateGoal(gi, field, value) {
+  DATA.goals[gi][field] = value === '' ? null : parseFloat(value);
+  renderGoals();
+  save();
+}
+function toggleStep(gi, si, checked) {
+  DATA.goals[gi].steps[si].done = checked;
+  renderGoals();
+  save();
+}
+
+function monthlyEur(items) {
+  let t = 0;
+  for (const it of items) {
+    if (!it.amount || (it.currency || 'EUR') !== 'EUR') continue;
+    const f = it.frequency || 'monthly';
+    t += f === 'bimonthly' ? it.amount / 2 : f === 'annual' ? it.amount / 12 : f === 'variable' ? 0 : it.amount;
+  }
+  return t;
+}
+
+function renderCashflow() {
+  const income = DATA.income || [];
+  if (!income.length) return;
+  document.getElementById('cashflow-card').style.display = '';
+  const inEur = monthlyEur(income);
+  const outEur = monthlyEur(DATA.bills || []) + monthlyEur(DATA.subscriptions || []);
+  const net = inEur - outEur;
+  const netCls = net >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('cashflow-summary').innerHTML = `
+    <div class="holding" style="border-top:none;padding-top:0">
+      <div><div class="name">Money in</div><div class="detail">recurring EUR income</div></div>
+      <div class="value" style="color:var(--green)">${fmtEur(inEur)}</div>
+    </div>
+    <div class="holding">
+      <div><div class="name">Money out</div><div class="detail">EUR bills + subscriptions (excl. US$ & variable)</div></div>
+      <div class="value">${fmtEur(outEur)}</div>
+    </div>
+    <div class="holding">
+      <div><div class="name" style="color:${netCls}">Net each month</div><div class="detail">before transfers & one-offs</div></div>
+      <div class="value" style="color:${netCls}">${net >= 0 ? '+' : ''}${fmtEur(net)}</div>
+    </div>`;
+  document.getElementById('income').innerHTML = income.map((s, i) => `<div class="row editable" onclick="openEditor('income',${i})">
+      <div><div class="name">${s.source}</div><div class="detail">${[s.type, s.notes].filter(Boolean).join(' · ')}</div></div>
+      <div class="right"><div class="amt" style="color:var(--green)">${s.amount ? fmtMoney(s.amount, s.currency) : '—'}</div><div class="detail">${s.frequency}</div></div>
+    </div>`).join('');
+}
+
+function sumByCurrency(items) {
+  const totals = {};
+  for (const it of items) {
+    if (!it.amount || (it.frequency || 'monthly') !== 'monthly') continue;
+    const ccy = it.currency || 'EUR';
+    totals[ccy] = (totals[ccy] || 0) + it.amount;
+  }
+  return Object.entries(totals).map(([ccy, n]) => fmtMoney(n, ccy)).join(' + ');
+}
+
+function renderList(id, items, mapper) {
+  const el = document.getElementById(id);
+  el.innerHTML = items && items.length ? items.map(mapper).join('') : '<div class="empty">Nothing here yet.</div>';
+}
+
+function render() {
+  const now = new Date();
+  document.getElementById('today').textContent = now.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('snapshot-banner').innerHTML = `This is the family's <b>live dashboard</b> — investment prices update automatically with the market, and <b>anything either of you edits saves for both of you</b>. Protected end-to-end by the household password.`;
+
+  renderHoldings();
+  renderGoals();
+  renderCashflow();
+
+  if (DATA.alerts && DATA.alerts.length) {
+    document.getElementById('alerts-card').style.display = '';
+    document.getElementById('alerts').innerHTML = DATA.alerts.map(a => `<div class="row">
+        <div><div class="name">${a.title}</div><div class="detail">${a.detail}</div></div>
+      </div>`).join('');
+  }
+
+  if (DATA.opportunities && DATA.opportunities.length) {
+    document.getElementById('opps-card').style.display = '';
+    document.getElementById('opps').innerHTML = DATA.opportunities.map(o => `<div class="row">
+        <div><div class="name">${o.title}</div><div class="detail">${o.detail}</div></div>
+        ${o.saving ? `<div class="right"><span class="badge ok">${o.saving}</span></div>` : ''}
+      </div>`).join('');
+    if (DATA.opportunitiesNote) document.getElementById('opps-total').textContent = DATA.opportunitiesNote;
+  }
+
+  const bills = (DATA.bills || []).map((b, i) => ({ ...b, _i: i, _next: b.nextDue || nextDue(b.dueDay) }))
+    .sort((a, b) => (daysUntil(a._next) ?? 999) - (daysUntil(b._next) ?? 999));
+  renderList('bills', bills, b => `<div class="row editable" onclick="openEditor('bills',${b._i})">
+      <div><div class="name">${b.provider}</div><div class="detail">${[b.category, b.frequency, b.notes].filter(Boolean).join(' · ')}</div></div>
+      <div class="right"><div class="amt">${fmtMoney(b.amount, b.currency)}</div>${dueBadge(daysUntil(b._next))}</div>
+    </div>`);
+  const monthly = sumByCurrency(bills);
+  if (monthly) document.getElementById('bills').insertAdjacentHTML('beforeend',
+    `<div class="total-line"><span>Monthly bills total (known amounts)</span><b>${monthly}</b></div>`);
+
+  const upcoming = [
+    ...(DATA.bills || []).map(b => ({ ...b, kind: b.category })),
+    ...(DATA.subscriptions || []).map(s => ({ ...s, kind: 'subscription' })),
+  ]
+    .map(it => ({ ...it, _next: it.nextDue || nextDue(it.dueDay) }))
+    .filter(it => { const d = daysUntil(it._next); return d != null && d >= 0 && d <= 30; })
+    .sort((a, b) => daysUntil(a._next) - daysUntil(b._next));
+  renderList('upcoming', upcoming, u => {
+    const d = new Date(u._next + 'T00:00:00');
+    return `<div class="row">
+      <div><div class="name">${u.provider}</div><div class="detail">${u.kind || ''}</div></div>
+      <div class="right"><div class="amt">${u.amount ? fmtMoney(u.amount, u.currency) : 'amount tbc'}</div>
+        <div class="detail">${d.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' })} ${dueBadge(daysUntil(u._next))}</div></div>
+    </div>`;
+  });
+  const upTotal = sumByCurrency(upcoming.map(u => ({ ...u, frequency: 'monthly' })));
+  if (upTotal) document.getElementById('upcoming').insertAdjacentHTML('beforeend',
+    `<div class="total-line"><span>Known outgoings, next 30 days</span><b>${upTotal}</b></div>`);
+
+  if (DATA.energy && DATA.energy.history && DATA.energy.history.length) {
+    const e = DATA.energy;
+    document.getElementById('energy-card').style.display = '';
+    document.getElementById('energy-title').textContent = e.title;
+    const max = Math.max(...e.history.map(h => h.total));
+    document.getElementById('energy-chart').innerHTML = e.history.map(h => `<div class="cbar" title="${h.period} · ${h.kwh} kWh · ${h.reading}">
+        <span class="cv">€${Math.round(h.total)}</span>
+        <i style="height:${Math.max(3, (h.total / max) * 80)}%"></i>
+        <span class="cl">${h.label}<br>${h.kwh.toLocaleString()} kWh</span>
+      </div>`).join('');
+    const totalYr = e.history.reduce((s, h) => s + h.total, 0);
+    const days = e.history.reduce((s, h) => s + h.days, 0);
+    document.getElementById('energy-summary').innerHTML =
+      `<span>${e.history.length} bills · ${days} days · ${e.history.reduce((s, h) => s + h.kwh, 0).toLocaleString()} kWh</span><b>${fmtMoney(totalYr, 'EUR')} · ~${fmtMoney(totalYr / (days / 30.44), 'EUR')}/mo avg</b>`;
+    document.getElementById('energy-note').textContent = e.note || '';
+  }
+
+  const contracts = [...(DATA.contracts || [])].sort((a, b) => (daysUntil(a.endDate) ?? 999) - (daysUntil(b.endDate) ?? 999));
+  renderList('contracts', contracts, c => `<div class="row">
+      <div><div class="name">${c.provider}</div><div class="detail">${[c.item, c.notes].filter(Boolean).join(' · ')}</div></div>
+      <div class="right"><div class="amt">${c.endDate || ''}</div>${dueBadge(daysUntil(c.endDate))}</div>
+    </div>`);
+
+  renderList('subscriptions', DATA.subscriptions, (s, i) => `<div class="row editable" onclick="openEditor('subscriptions',${i})">
+      <div><div class="name">${s.provider}</div><div class="detail">${[s.frequency, s.notes].filter(Boolean).join(' · ')}</div></div>
+      <div class="right"><div class="amt">${fmtMoney(s.amount, s.currency)}</div></div>
+    </div>`);
+  const subMonthly = sumByCurrency(DATA.subscriptions || []);
+  if (subMonthly) document.getElementById('subscriptions').insertAdjacentHTML('beforeend',
+    `<div class="total-line"><span>Monthly subscriptions total (known amounts)</span><b>${subMonthly}</b></div>`);
+
+  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance (stocks/ETFs) & CoinGecko (crypto), refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit, or use the add links in each card — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext.';
+}
+
+function updateHolding(i, field, value) {
+  DATA.holdings[i][field] = value === '' ? null : parseFloat(value);
+  renderHoldings(); renderGoals();
+  save();
+}
+
+const SCHEMAS = {
+  holdings: {
+    title: 'Investment', arr: () => DATA.holdings,
+    fields: [
+      { key: 'label', label: 'Name', type: 'text', ph: 'e.g. Apple, Ethereum, Davy pension' },
+      { key: 'kind', label: 'Type', type: 'select', options: [['stock', 'Stock / ETF (live price)'], ['crypto', 'Crypto (live price)'], ['manual', 'Manual value (cash, pension, savings)']] },
+      { key: 'ref', label: 'Ticker / CoinGecko id / account note', type: 'text', ph: 'VOO, VWCE.DE — bitcoin — or a note', hint: 'Stock: Yahoo ticker (add .DE/.L etc. for European listings). Crypto: CoinGecko id like "bitcoin". Manual: just a note.' },
+      { key: 'units', label: 'Units held', type: 'number', ph: 'shares or coins' },
+      { key: 'costUsd', label: 'Cost basis — total US$ paid (optional)', type: 'number', ph: 'to show gain / loss' },
+      { key: 'value', label: 'Manual value (manual type only)', type: 'number', ph: 'current value you maintain' },
+      { key: 'currency', label: 'Currency of manual value', type: 'select', options: [['EUR', 'EUR (€)'], ['USD', 'USD ($)']] },
+    ],
+    make: v => ({ id: 'h' + Date.now(), ...v }),
+  },
+  bills: {
+    title: 'Bill', arr: () => DATA.bills,
+    fields: [
+      { key: 'provider', label: 'Provider', type: 'text', ph: 'e.g. Vodafone' },
+      { key: 'category', label: 'Category', type: 'text', ph: 'e.g. broadband' },
+      { key: 'amount', label: 'Amount', type: 'number' },
+      { key: 'currency', label: 'Currency', type: 'select', options: [['EUR', 'EUR (€)'], ['USD', 'USD ($)']] },
+      { key: 'frequency', label: 'Frequency', type: 'select', options: [['monthly', 'Monthly'], ['bimonthly', 'Every 2 months'], ['annual', 'Annual'], ['variable', 'Variable']] },
+      { key: 'dueDay', label: 'Due day of month (1–31)', type: 'number', ph: 'e.g. 15' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
+  subscriptions: {
+    title: 'Subscription', arr: () => DATA.subscriptions,
+    fields: [
+      { key: 'provider', label: 'Provider', type: 'text', ph: 'e.g. Netflix' },
+      { key: 'amount', label: 'Amount', type: 'number' },
+      { key: 'currency', label: 'Currency', type: 'select', options: [['EUR', 'EUR (€)'], ['USD', 'USD ($)']] },
+      { key: 'frequency', label: 'Frequency', type: 'select', options: [['monthly', 'Monthly'], ['annual', 'Annual']] },
+      { key: 'dueDay', label: 'Charge day of month (1–31)', type: 'number' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
+  income: {
+    title: 'Income', arr: () => (DATA.income = DATA.income || []),
+    fields: [
+      { key: 'source', label: 'Source', type: 'text', ph: 'e.g. Employer, rent' },
+      { key: 'type', label: 'Type', type: 'text', ph: 'salary, benefit, rent…' },
+      { key: 'amount', label: 'Amount', type: 'number' },
+      { key: 'currency', label: 'Currency', type: 'select', options: [['EUR', 'EUR (€)'], ['USD', 'USD ($)']] },
+      { key: 'frequency', label: 'Frequency', type: 'select', options: [['monthly', 'Monthly'], ['annual', 'Annual'], ['variable', 'Variable / irregular']] },
+      { key: 'dueDay', label: 'Day of month received', type: 'number' },
+      { key: 'notes', label: 'Notes', type: 'text' },
+    ],
+  },
+};
+const NUMERIC = new Set(['amount', 'units', 'costUsd', 'value', 'dueDay']);
+let editCtx = null;
+
+function openEditor(section, index) {
+  const schema = SCHEMAS[section];
+  const editing = index != null;
+  const item = editing ? schema.arr()[index] : {};
+  editCtx = { section, index };
+  document.getElementById('modal-title').textContent = (editing ? 'Edit ' : 'Add ') + schema.title.toLowerCase();
+  document.getElementById('modal-sub').textContent = editing ? 'Update or delete this entry — saves for the whole household.' : 'Fill in what you know — you can leave fields blank.';
+  document.getElementById('modal-fields').innerHTML = schema.fields.map(f => {
+    const val = item[f.key] ?? (f.type === 'select' ? f.options[0][0] : '');
+    const input = f.type === 'select'
+      ? `<select id="f_${f.key}">${f.options.map(o => `<option value="${o[0]}" ${o[0] === val ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>`
+      : `<input id="f_${f.key}" type="${f.type}" ${f.type === 'number' ? 'step="any"' : ''} value="${String(val).replace(/"/g, '&quot;')}" placeholder="${f.ph || ''}">`;
+    return `<div class="field"><label>${f.label}</label>${input}${f.hint ? `<div class="fhint">${f.hint}</div>` : ''}</div>`;
+  }).join('');
+  document.getElementById('modal-delete').style.visibility = editing ? 'visible' : 'hidden';
+  document.getElementById('modal').classList.add('open');
+}
+function closeEditor() { document.getElementById('modal').classList.remove('open'); editCtx = null; }
+
+function saveEditor() {
+  const schema = SCHEMAS[editCtx.section];
+  const obj = {};
+  for (const f of schema.fields) {
+    const raw = document.getElementById('f_' + f.key).value;
+    if (NUMERIC.has(f.key)) obj[f.key] = raw === '' ? null : parseFloat(raw);
+    else obj[f.key] = raw === '' ? (f.key === 'currency' ? 'EUR' : undefined) : raw;
+  }
+  const arr = schema.arr();
+  if (editCtx.index != null) arr[editCtx.index] = { ...arr[editCtx.index], ...obj };
+  else arr.push(schema.make ? schema.make(obj) : obj);
+  const wasHoldings = editCtx.section === 'holdings';
+  closeEditor();
+  save();
+  render();
+  if (wasHoldings) refreshPrices();
+}
+function deleteCurrent() {
+  const schema = SCHEMAS[editCtx.section];
+  schema.arr().splice(editCtx.index, 1);
+  closeEditor();
+  save();
+  render();
+}
+
+document.getElementById('pw').focus();
+// pre-fetch the encrypted blob while the password is being typed
+fetchEnc().then(e => { ENC = e; }).catch(() => {});
+</script>
+</body>
+</html>
