@@ -23,7 +23,7 @@
   .wrap {
     background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh; padding: 28px 32px 60px;
+    min-height: 100vh; padding: 24px 32px 60px;
   }
   header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; max-width: 1400px; margin-left: auto; margin-right: auto; }
   h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
@@ -31,12 +31,22 @@
   .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 5px; animation: pulse 2.4s ease-in-out infinite; vertical-align: 1px; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   @media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
-  .snapshot-banner { max-width: 1400px; margin: 0 auto 20px; background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 10px; padding: 11px 16px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
-  .snapshot-banner b { color: var(--text); }
+
+  /* tabs */
+  .tabbar { display: flex; gap: 6px; max-width: 1400px; margin: 0 auto 18px; flex-wrap: wrap; }
+  .tabbar button { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid transparent; color: var(--muted);
+    font-size: 13.5px; font-weight: 600; padding: 9px 14px; border-radius: 999px; cursor: pointer; transition: color .15s, background .15s; font-family: inherit; }
+  .tabbar button:hover { color: var(--text); background: var(--panel); }
+  .tabbar button.active { color: var(--text); background: var(--panel); border-color: var(--border); }
+  .tabbar button.active svg { color: var(--accent); }
+  .page { display: none; }
+  .page.active { display: block; }
+
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; max-width: 1400px; margin: 0 auto; }
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
   .card h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
   .card h2 .tag { font-size: 11px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .span-all { grid-column: 1 / -1; }
 
   .networth { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
   .networth-sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
@@ -46,8 +56,6 @@
   .holding .value { font-weight: 700; font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
   .holding .price { color: var(--muted); font-size: 12px; text-align: right; margin-top: 2px; }
   .units-input { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 3px 6px; width: 90px; font-size: 12px; text-align: right; }
-  .btc-dot { color: var(--orange); }
-  .voo-dot { color: var(--red); }
 
   .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); gap: 10px; }
   .row:first-of-type { border-top: none; }
@@ -82,15 +90,34 @@
   .total-line { display: flex; justify-content: space-between; padding-top: 12px; margin-top: 4px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
   .total-line b { color: var(--text); }
   footer { max-width: 1400px; margin: 26px auto 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
-  footer a { color: var(--accent); cursor: pointer; }
 
   .add-link { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--accent); cursor: pointer; user-select: none;
     display: inline-flex; align-items: center; gap: 5px; padding: 8px; margin: -8px; border-radius: 6px; transition: background .15s; }
   .add-link:hover { background: var(--panel-2); }
+  .add-link svg { flex-shrink: 0; }
   .row.editable, .holding.editable { cursor: pointer; border-radius: 8px; transition: background .12s; }
   .row.editable:hover, .holding.editable:hover { background: var(--panel-2); }
   .row.editable { padding-left: 8px; padding-right: 8px; margin: 0 -8px; }
   .hint-edit { font-size: 11px; color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
+
+  /* overview */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .stat { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; cursor: pointer; border: 1px solid transparent; transition: border-color .15s; }
+  .stat:hover { border-color: var(--border); }
+  .stat .sl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+  .stat .sv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .sd { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .alloc-strip { display: flex; height: 12px; border-radius: 999px; overflow: hidden; margin: 12px 0 6px; }
+  .alloc-strip i { display: block; height: 100%; }
+
+  /* charts */
+  .donut-wrap { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  .donut { width: 168px; height: 168px; flex-shrink: 0; }
+  .legend { flex: 1; min-width: 180px; }
+  .legend .li { display: flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 4px 0; }
+  .legend .li .lv { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .linechart { width: 100%; height: auto; display: block; }
 
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
   .modal-backdrop.open { display: flex; }
@@ -102,7 +129,7 @@
   .field input, .field select { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 7px; padding: 8px 10px; font-size: 14px; }
   .field .fhint { font-size: 11px; color: var(--muted); margin-top: 3px; }
   .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 10px; }
-  .btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
   .btn:hover { border-color: var(--muted); }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #05070a; }
   .btn.danger { color: var(--red); border: none; background: none; padding: 9px 4px; }
@@ -118,14 +145,16 @@
   .lock-card .btn { width: 100%; }
   #pw-error { color: var(--red); font-size: 12.5px; margin-top: 12px; min-height: 16px; }
 
-  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
-  .add-link svg { flex-shrink: 0; }
   @media (max-width: 640px) {
-    .wrap { padding: 18px 14px 48px; }
+    .wrap { padding: 16px 14px 84px; }
     .networth { font-size: 30px; }
     .row.editable { padding-top: 12px; padding-bottom: 12px; }
     .check { padding: 6px 0; }
     .btn { padding: 12px 16px; }
+    .tabbar { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      background: var(--panel); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; z-index: 40; }
+    .tabbar button { flex-direction: column; gap: 3px; font-size: 10px; padding: 7px 2px; border-radius: 8px; justify-content: center; }
+    .tabbar button.active { border-color: transparent; background: var(--panel-2); }
   }
 </style>
 </head>
@@ -154,64 +183,137 @@
   </div>
 </header>
 
-<div class="snapshot-banner" id="snapshot-banner"></div>
+<nav class="tabbar" id="tabbar" aria-label="Sections">
+  <button data-tab="overview"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Overview</button>
+  <button data-tab="invest"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>Investments</button>
+  <button data-tab="mortgage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Mortgage</button>
+  <button data-tab="bills"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h6"/></svg>Bills</button>
+  <button data-tab="goals"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Goals</button>
+</nav>
 
-<div class="grid">
-  <div class="card" style="grid-column: 1 / -1;">
-    <h2>Investments <span class="tag" id="price-time"></span> <span class="add-link" style="margin-left:auto" onclick="openEditor('holdings')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add investment</span></h2>
-    <div class="networth" id="networth">—</div>
-    <div class="networth-sub" id="networth-eur"></div>
-    <div id="holdings"></div>
-  </div>
+<!-- ===== OVERVIEW ===== -->
+<section class="page" id="page-overview">
+  <div class="grid">
+    <div class="card span-all">
+      <h2>Snapshot <span class="tag" id="price-time"></span></h2>
+      <div class="networth" id="networth">—</div>
+      <div class="networth-sub" id="networth-eur"></div>
+      <div class="alloc-strip" id="alloc-strip"></div>
+      <div class="hint-edit" id="alloc-hint"></div>
+      <div class="stat-grid" id="ov-stats" style="margin-top:16px"></div>
+    </div>
 
-  <div class="card" id="goals-card" style="display:none;">
-    <h2>Goals</h2>
-    <div id="goals"></div>
-  </div>
+    <div class="card" id="alerts-card" style="display:none; border-color: rgba(248,81,73,.45);">
+      <h2 style="color: var(--red);">Needs attention</h2>
+      <div id="alerts"></div>
+    </div>
 
-  <div class="card" id="alerts-card" style="display:none; border-color: rgba(248,81,73,.45);">
-    <h2 style="color: var(--red);">Needs attention</h2>
-    <div id="alerts"></div>
+    <div class="card">
+      <h2>Coming up <span class="tag">next 14 days</span></h2>
+      <div id="ov-upcoming"></div>
+    </div>
   </div>
+</section>
 
-  <div class="card" id="opps-card" style="display:none; border-color: rgba(63,185,80,.45);">
-    <h2 style="color: var(--green);">Opportunities <span class="tag" id="opps-total"></span></h2>
-    <div id="opps"></div>
-  </div>
+<!-- ===== INVESTMENTS ===== -->
+<section class="page" id="page-invest">
+  <div class="grid">
+    <div class="card span-all">
+      <h2>Investments <span class="tag" id="price-time-2"></span> <span class="add-link" style="margin-left:auto" onclick="openEditor('holdings')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add investment</span></h2>
+      <div class="networth" id="networth-2">—</div>
+      <div class="networth-sub" id="networth-eur-2"></div>
+      <div id="holdings"></div>
+    </div>
 
-  <div class="card" id="cashflow-card" style="display:none;">
-    <h2>Income &amp; Cashflow <span class="tag">per month</span> <span class="add-link" style="margin-left:auto" onclick="openEditor('income')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add income</span></h2>
-    <div id="cashflow-summary"></div>
-    <div id="income"></div>
-  </div>
+    <div class="card">
+      <h2>Allocation</h2>
+      <div class="donut-wrap">
+        <div id="alloc-donut"></div>
+        <div class="legend" id="alloc-legend"></div>
+      </div>
+    </div>
 
-  <div class="card">
-    <h2>Next 30 Days</h2>
-    <div id="upcoming"></div>
+    <div class="card">
+      <h2>Currency split</h2>
+      <div id="ccy-split"></div>
+      <div class="gnotes" style="margin-top:10px">Euro holdings are your Davy funds and European ETFs; dollar holdings are VOO, Bitcoin and Alphabet. The net-worth total converts everything at the live EUR/USD rate.</div>
+    </div>
   </div>
+</section>
 
-  <div class="card" id="energy-card" style="display:none;">
-    <h2 id="energy-title">Energy</h2>
-    <div class="chart" id="energy-chart"></div>
-    <div class="total-line" id="energy-summary"></div>
-    <div class="gnotes" id="energy-note"></div>
-  </div>
+<!-- ===== MORTGAGE ===== -->
+<section class="page" id="page-mortgage">
+  <div class="grid">
+    <div class="card span-all">
+      <h2>Mortgage — 10 Parsons Hall <span class="tag" id="mort-lender"></span></h2>
+      <div class="stat-grid" id="mort-stats"></div>
+    </div>
 
-  <div class="card">
-    <h2>Bills <span class="add-link" style="margin-left:auto" onclick="openEditor('bills')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add bill</span></h2>
-    <div id="bills"></div>
-  </div>
+    <div class="card">
+      <h2>Overpayment calculator</h2>
+      <div id="mort-calc"></div>
+    </div>
 
-  <div class="card">
-    <h2>Contracts &amp; Renewals</h2>
-    <div id="contracts"></div>
+    <div class="card">
+      <h2>Balance projection</h2>
+      <div id="mort-chart"></div>
+      <div class="gnotes" id="mort-chart-note"></div>
+    </div>
   </div>
+</section>
 
-  <div class="card">
-    <h2>Subscriptions <span class="add-link" style="margin-left:auto" onclick="openEditor('subscriptions')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add</span></h2>
-    <div id="subscriptions"></div>
+<!-- ===== BILLS ===== -->
+<section class="page" id="page-bills">
+  <div class="grid">
+    <div class="card" id="cashflow-card" style="display:none;">
+      <h2>Income &amp; Cashflow <span class="tag">per month</span> <span class="add-link" style="margin-left:auto" onclick="openEditor('income')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add income</span></h2>
+      <div id="cashflow-summary"></div>
+      <div id="income"></div>
+    </div>
+
+    <div class="card">
+      <h2>Next 30 Days</h2>
+      <div id="upcoming"></div>
+    </div>
+
+    <div class="card">
+      <h2>Bills <span class="add-link" style="margin-left:auto" onclick="openEditor('bills')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add bill</span></h2>
+      <div id="bills"></div>
+    </div>
+
+    <div class="card">
+      <h2>Subscriptions <span class="add-link" style="margin-left:auto" onclick="openEditor('subscriptions')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>add</span></h2>
+      <div id="subscriptions"></div>
+    </div>
+
+    <div class="card">
+      <h2>Contracts &amp; Renewals</h2>
+      <div id="contracts"></div>
+    </div>
+
+    <div class="card" id="energy-card" style="display:none;">
+      <h2 id="energy-title">Energy</h2>
+      <div class="chart" id="energy-chart"></div>
+      <div class="total-line" id="energy-summary"></div>
+      <div class="gnotes" id="energy-note"></div>
+    </div>
   </div>
-</div>
+</section>
+
+<!-- ===== GOALS ===== -->
+<section class="page" id="page-goals">
+  <div class="grid">
+    <div class="card">
+      <h2>Goals</h2>
+      <div id="goals"></div>
+    </div>
+
+    <div class="card" id="opps-card" style="display:none; border-color: rgba(63,185,80,.45);">
+      <h2 style="color: var(--green);">Opportunities <span class="tag" id="opps-total"></span></h2>
+      <div id="opps"></div>
+    </div>
+  </div>
+</section>
 
 <footer id="footer"></footer>
 </div>
@@ -232,14 +334,13 @@
 </div>
 
 <script>
-// ---- live household dashboard ----
-// Data is end-to-end encrypted: the server stores only AES-256-GCM ciphertext.
-// The key is derived from the household password in the browser (PBKDF2, 310k iters).
-// Writes are authorised by a separate password-derived token — the server never sees the password.
+// ---- live household dashboard (tabbed) ----
+// End-to-end encrypted: the server stores only AES-256-GCM ciphertext.
 const BASE = 'https://uiwoysyttalpfhljaoop.supabase.co/functions/v1/household';
-let ENC = null;            // {salt, iv, ct} fetched from server
-let SALT_B64 = null;       // kept for re-encryption on save
+let ENC = null, SALT_B64 = null;
 let DATA = null, PRICES = null, AES_KEY = null, AUTH_TOKEN = null;
+
+const PALETTE = ['#58a6ff', '#3fb950', '#f7931a', '#f85149', '#bc8cff', '#39c5cf', '#d29922', '#f778ba', '#8b949e', '#1f6feb'];
 
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 function toB64(buf) {
@@ -258,7 +359,6 @@ async function deriveAuthToken(pw) {
   const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode('cashman-auth-v1'), iterations: 310000, hash: 'SHA-256' }, raw, 256);
   return [...new Uint8Array(bits)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
 async function fetchEnc() {
   const r = await fetch(BASE + '/data', { cache: 'no-store' });
   if (!r.ok) throw new Error('data ' + r.status);
@@ -276,18 +376,17 @@ async function unlock() {
     if (!ENC) ENC = await fetchEnc();
   } catch (e) {
     err.textContent = 'Could not reach the server — check your connection and try again.';
-    done();
-    return;
+    done(); return;
   }
   try {
     const key = await deriveKey(pw, b64(ENC.salt));
     const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(ENC.iv) }, key, b64(ENC.ct));
     const payload = JSON.parse(new TextDecoder().decode(plain));
-    AES_KEY = key;
-    SALT_B64 = ENC.salt;
+    AES_KEY = key; SALT_B64 = ENC.salt;
     AUTH_TOKEN = await deriveAuthToken(pw);
     DATA = payload.data;
     document.getElementById('lock').style.display = 'none';
+    showTab(location.hash.slice(1) || 'overview');
     render();
     refreshPrices();
     setInterval(refreshPrices, 5 * 60 * 1000);
@@ -306,11 +405,7 @@ function setStatus(msg, isError) {
 }
 
 let saveTimer = null;
-function save() {
-  // debounce rapid edits into one write
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(doSave, 400);
-}
+function save() { clearTimeout(saveTimer); saveTimer = setTimeout(doSave, 400); }
 async function doSave() {
   if (!AES_KEY || !AUTH_TOKEN) return;
   setStatus('Saving…');
@@ -335,14 +430,27 @@ async function refreshPrices() {
   const coins = [...new Set(DATA.holdings.filter(h => h.kind === 'crypto' && h.ref).map(h => h.ref))];
   try {
     const r = await fetch(BASE + '/prices?stocks=' + encodeURIComponent(stocks.join(',')) + '&coins=' + encodeURIComponent(coins.join(',')), { cache: 'no-store' });
-    if (r.ok) { PRICES = await r.json(); renderHoldings(); renderGoals(); }
+    if (r.ok) { PRICES = await r.json(); render(); }
   } catch (e) {}
 }
 
+// ---- tabs ----
+const TABS = ['overview', 'invest', 'mortgage', 'bills', 'goals'];
+function showTab(t) {
+  if (!TABS.includes(t)) t = 'overview';
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + t));
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.tab === t));
+  try { history.replaceState(null, '', '#' + t); } catch (e) {}
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('.tabbar button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+// ---- formatters & helpers ----
 const fmtUsd = n => n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const fmtUsd2 = n => n == null ? '—' : n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const fmtEur = n => n == null ? '—' : n.toLocaleString('en-IE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const fmtMoney = (n, ccy) => n == null ? '' : n.toLocaleString('en-IE', { style: 'currency', currency: ccy || 'EUR' });
+const fmtK = n => '€' + (n >= 1000 ? Math.round(n / 1000) + 'k' : Math.round(n));
 
 function daysUntil(dateStr) {
   if (!dateStr) return null;
@@ -380,13 +488,114 @@ function holdingCcy(h) {
 function holdingValueUsd(h) {
   const v = holdingValueNative(h);
   if (v == null) return null;
-  if (holdingCcy(h) === 'EUR') {
-    return PRICES && PRICES.usdToEur ? v / PRICES.usdToEur : null;
-  }
+  if (holdingCcy(h) === 'EUR') return PRICES && PRICES.usdToEur ? v / PRICES.usdToEur : null;
   return v;
 }
+function portfolioUsd() {
+  if (!DATA) return 0;
+  return DATA.holdings.reduce((s, h) => s + (holdingValueUsd(h) || 0), 0);
+}
 const dotFor = h => `<span class="dot" style="background:${h.kind === 'crypto' ? 'var(--orange)' : h.kind === 'manual' ? 'var(--muted)' : 'var(--red)'}"></span>`;
+function goalPct(p) { return Math.max(0, Math.min(100, Math.round(p * 100))); }
 
+function monthlyEur(items) {
+  let t = 0;
+  for (const it of items) {
+    if (!it.amount || (it.currency || 'EUR') !== 'EUR') continue;
+    const f = it.frequency || 'monthly';
+    t += f === 'bimonthly' ? it.amount / 2 : f === 'annual' ? it.amount / 12 : f === 'variable' ? 0 : it.amount;
+  }
+  return t;
+}
+function sumByCurrency(items) {
+  const totals = {};
+  for (const it of items) {
+    if (!it.amount || (it.frequency || 'monthly') !== 'monthly') continue;
+    const ccy = it.currency || 'EUR';
+    totals[ccy] = (totals[ccy] || 0) + it.amount;
+  }
+  return Object.entries(totals).map(([ccy, n]) => fmtMoney(n, ccy)).join(' + ');
+}
+function renderList(id, items, mapper) {
+  const el = document.getElementById(id);
+  el.innerHTML = items && items.length ? items.map(mapper).join('') : '<div class="empty">Nothing here yet.</div>';
+}
+function upcomingItems(maxDays) {
+  return [
+    ...(DATA.bills || []).map(b => ({ ...b, kind: b.category })),
+    ...(DATA.subscriptions || []).map(s => ({ ...s, kind: 'subscription' })),
+  ]
+    .map(it => ({ ...it, _next: it.nextDue || nextDue(it.dueDay) }))
+    .filter(it => { const d = daysUntil(it._next); return d != null && d >= 0 && d <= maxDays; })
+    .sort((a, b) => daysUntil(a._next) - daysUntil(b._next));
+}
+
+// ---- mortgage maths ----
+function mortgageGoal() { return (DATA.goals || []).find(g => g.type === 'mortgage'); }
+function monthsToClear(bal, monthlyRate, pay) {
+  if (pay <= bal * monthlyRate) return Infinity;
+  return Math.log(pay / (pay - bal * monthlyRate)) / Math.log(1 + monthlyRate);
+}
+function payoffLabel(months) {
+  if (!isFinite(months)) return '—';
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + Math.ceil(months), 1).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' });
+}
+function balanceSeries(bal, monthlyRate, pay) {
+  const pts = [{ m: 0, b: bal }];
+  let b = bal;
+  for (let m = 1; m <= 420 && b > 0; m++) {
+    b = b * (1 + monthlyRate) - pay;
+    if (b < 0) b = 0;
+    if (m % 6 === 0 || b === 0) pts.push({ m, b });
+    if (b === 0) break;
+  }
+  return pts;
+}
+
+// ---- SVG charts (no dependencies) ----
+function donutSVG(items) {
+  const total = items.reduce((s, i) => s + i.value, 0);
+  let cum = 0;
+  const segs = items.map(it => {
+    const pct = total ? (it.value / total) * 100 : 0;
+    const s = `<circle cx="60" cy="60" r="46" fill="none" stroke="${it.color}" stroke-width="17" pathLength="100"
+      stroke-dasharray="${Math.max(pct - 0.6, 0.001)} ${100 - Math.max(pct - 0.6, 0.001)}" stroke-dashoffset="${-cum}" transform="rotate(-90 60 60)"/>`;
+    cum += pct;
+    return s;
+  }).join('');
+  return `<svg class="donut" viewBox="0 0 120 120" role="img" aria-label="Portfolio allocation">${segs}
+    <text x="60" y="57" text-anchor="middle" fill="var(--text)" font-size="13" font-weight="700">${fmtUsd(total)}</text>
+    <text x="60" y="72" text-anchor="middle" fill="var(--muted)" font-size="7.5">total (USD)</text></svg>`;
+}
+
+function lineChartSVG(seriesArr, xMaxMonths) {
+  const W = 360, H = 170, padL = 40, padR = 10, padT = 12, padB = 24;
+  const yMax = Math.max(...seriesArr.flatMap(s => s.pts.map(p => p.b))) * 1.04;
+  const X = m => padL + (m / xMaxMonths) * (W - padL - padR);
+  const Y = v => padT + (1 - v / yMax) * (H - padT - padB);
+  // gridlines
+  let grid = '';
+  for (const frac of [0, 0.5, 1]) {
+    const v = yMax * frac, y = Y(v);
+    grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--border)" stroke-width="1"/>
+      <text x="${padL - 5}" y="${y + 3}" text-anchor="end" fill="var(--muted)" font-size="8.5">${fmtK(v)}</text>`;
+  }
+  const yr = new Date().getFullYear();
+  let xlab = '';
+  for (const frac of [0, 0.33, 0.66, 1]) {
+    const m = xMaxMonths * frac;
+    xlab += `<text x="${X(m)}" y="${H - 8}" text-anchor="middle" fill="var(--muted)" font-size="8.5">${yr + Math.round(m / 12)}</text>`;
+  }
+  const paths = seriesArr.map(s => {
+    const d = s.pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.m).toFixed(1)} ${Y(p.b).toFixed(1)}`).join(' ');
+    const area = s.fill ? `<path d="${d} L${X(s.pts[s.pts.length - 1].m).toFixed(1)} ${Y(0)} L${X(0)} ${Y(0)} Z" fill="${s.color}" opacity="0.08"/>` : '';
+    return area + `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2" ${s.dash ? 'stroke-dasharray="4 3"' : ''}/>`;
+  }).join('');
+  return `<svg class="linechart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Mortgage balance projection">${grid}${xlab}${paths}</svg>`;
+}
+
+// ---- renderers ----
 function renderHoldings() {
   const el = document.getElementById('holdings');
   let totalUsd = 0, anyPrice = false;
@@ -410,36 +619,120 @@ function renderHoldings() {
       : `<div class="detail">units: <input class="units-input" type="number" step="any" value="${h.units ?? ''}" onclick="event.stopPropagation()" onchange="updateHolding(${i},'units',this.value)">
           &nbsp; cost $ <input class="units-input" type="number" step="any" value="${h.costUsd ?? ''}" placeholder="total paid" onclick="event.stopPropagation()" onchange="updateHolding(${i},'costUsd',this.value)"></div>`;
     return `<div class="holding editable" onclick="openEditor('holdings',${i})">
-      <div>
-        <div class="name">${dotFor(h)}${h.label}</div>
-        ${detail}
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div>
-          <div class="value">${ccy === 'EUR' ? fmtEur(valNative) : fmtUsd(valNative)}</div>
-          <div class="price">${priceLine}</div>
-          ${gainHtml}
-        </div>
-      </div>
+      <div><div class="name">${dotFor(h)}${h.label}</div>${detail}</div>
+      <div><div class="value">${ccy === 'EUR' ? fmtEur(valNative) : fmtUsd(valNative)}</div>
+        <div class="price">${priceLine}</div>${gainHtml}</div>
     </div>`;
   }).join('');
-  document.getElementById('networth').textContent = anyPrice ? fmtUsd(totalUsd) : '—';
+  const nwTxt = anyPrice ? fmtUsd(totalUsd) : '—';
   const eur = PRICES && PRICES.usdToEur ? totalUsd * PRICES.usdToEur : null;
-  document.getElementById('networth-eur').textContent = eur ? '≈ ' + fmtEur(eur) + ' · total across all holdings (mixed € + $)' : 'Fetching live prices…';
-  if (PRICES && PRICES.fetchedAt) document.getElementById('price-time').textContent = 'live · ' + new Date(PRICES.fetchedAt).toLocaleTimeString();
+  const eurTxt = eur ? '≈ ' + fmtEur(eur) + ' · total across all holdings (mixed € + $)' : 'Fetching live prices…';
+  for (const suffix of ['', '-2']) {
+    document.getElementById('networth' + suffix).textContent = nwTxt;
+    document.getElementById('networth-eur' + suffix).textContent = eurTxt;
+  }
+  if (PRICES && PRICES.fetchedAt) {
+    const t = 'live · ' + new Date(PRICES.fetchedAt).toLocaleTimeString();
+    document.getElementById('price-time').textContent = t;
+    document.getElementById('price-time-2').textContent = t;
+  }
 }
 
-function portfolioUsd() {
-  if (!DATA) return 0;
-  return DATA.holdings.reduce((s, h) => s + (holdingValueUsd(h) || 0), 0);
+function renderInvestCharts() {
+  const items = DATA.holdings
+    .map((h, i) => ({ label: h.label, value: holdingValueUsd(h) || 0, color: PALETTE[i % PALETTE.length] }))
+    .filter(i => i.value > 0)
+    .sort((a, b) => b.value - a.value);
+  const total = items.reduce((s, i) => s + i.value, 0);
+  document.getElementById('alloc-donut').innerHTML = total ? donutSVG(items) : '<div class="empty">Waiting for prices…</div>';
+  document.getElementById('alloc-legend').innerHTML = items.map(i =>
+    `<div class="li"><span class="dot" style="background:${i.color};margin-right:0"></span>
+      <span>${i.label.replace(/ \(Davy\)| \(Mr & Mrs\)|\(Tim's pension\)/g, '')}</span>
+      <span class="lv">${total ? Math.round(i.value / total * 100) : 0}% · ${fmtUsd(i.value)}</span></div>`).join('');
+
+  // currency split
+  let eurUsd = 0, usdUsd = 0;
+  for (const h of DATA.holdings) {
+    const v = holdingValueUsd(h) || 0;
+    if (holdingCcy(h) === 'EUR') eurUsd += v; else usdUsd += v;
+  }
+  const tot = eurUsd + usdUsd;
+  const pctEur = tot ? Math.round(eurUsd / tot * 100) : 0;
+  document.getElementById('ccy-split').innerHTML = `
+    <div class="alloc-strip" style="margin-top:4px"><i style="width:${pctEur}%;background:var(--accent)"></i><i style="width:${100 - pctEur}%;background:var(--green)"></i></div>
+    <div class="li" style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:8px">
+      <span><span class="dot" style="background:var(--accent)"></span>Euro assets ${pctEur}%</span><span style="font-variant-numeric:tabular-nums">${fmtUsd(eurUsd)}</span></div>
+    <div class="li" style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:4px">
+      <span><span class="dot" style="background:var(--green)"></span>Dollar assets ${100 - pctEur}%</span><span style="font-variant-numeric:tabular-nums">${fmtUsd(usdUsd)}</span></div>`;
+
+  // overview allocation strip
+  document.getElementById('alloc-strip').innerHTML = items.map(i =>
+    `<i style="width:${total ? i.value / total * 100 : 0}%;background:${i.color}" title="${i.label}"></i>`).join('');
+  document.getElementById('alloc-hint').textContent = items.length
+    ? items.slice(0, 3).map(i => `${i.label.split(' (')[0]} ${Math.round(i.value / total * 100)}%`).join(' · ') + ' · see Investments tab for the full breakdown'
+    : '';
 }
-function goalPct(p) { return Math.max(0, Math.min(100, Math.round(p * 100))); }
+
+function renderMortgage() {
+  const g = mortgageGoal();
+  if (!g) return;
+  document.getElementById('mort-lender').textContent = g.lender + ' · a/c ' + (g.account || '');
+  const r = (g.rate / 100) / 12;
+  const extra = g.overpay || 0;
+  const base = monthsToClear(g.balance, r, g.monthlyRepayment);
+  const withX = monthsToClear(g.balance, r, g.monthlyRepayment + extra);
+  const baseInterest = g.monthlyRepayment * base - g.balance;
+  const withInterest = (g.monthlyRepayment + extra) * withX - g.balance;
+  const cap10 = Math.round((g.balance * 0.10) / 12);
+
+  document.getElementById('mort-stats').innerHTML = [
+    ['Balance', fmtMoney(g.balance, 'EUR'), ''],
+    ['Rate', g.rate + '%', g.rateNote || ''],
+    ['Repayment', fmtMoney(g.monthlyRepayment, 'EUR') + '/mo', 'DD ~27th'],
+    ['Mortgage-free', payoffLabel(extra > 0 ? withX : base), extra > 0 ? 'with your overpayment' : 'on current schedule'],
+    ['Interest left', fmtMoney(extra > 0 ? withInterest : baseInterest, 'EUR'), 'total remaining'],
+    ['Interest YTD', g.interestYtd ? fmtMoney(g.interestYtd, 'EUR') : '—', 'paid this year'],
+  ].map(s => `<div class="stat" style="cursor:default"><div class="sl">${s[0]}</div><div class="sv">${s[1]}</div>${s[2] ? `<div class="sd">${s[2]}</div>` : ''}</div>`).join('');
+
+  const monthsSaved = isFinite(base) && isFinite(withX) ? Math.round(base - withX) : 0;
+  const interestSaved = isFinite(baseInterest) && isFinite(withInterest) ? baseInterest - withInterest : 0;
+  const yrs = m => `${Math.floor(m / 12)}y ${Math.round(m % 12)}m`;
+  document.getElementById('mort-calc').innerHTML = `
+    <div style="background:var(--panel-2);border-radius:10px;padding:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:13.5px">Overpay extra <b>€</b> <input class="units-input" type="number" min="0" step="50" value="${extra}" onchange="updateMortgage('overpay',this.value)"> /mo</span>
+        <span class="hint-edit">penalty-free up to ~€${cap10.toLocaleString()}/mo</span>
+      </div>
+      ${extra > 0 ? `<div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap">
+        <div><div class="hint-edit">Mortgage-free</div><div style="font-weight:700;color:var(--green);font-size:16px">${payoffLabel(withX)}</div><div class="hint-edit">was ${payoffLabel(base)}</div></div>
+        <div><div class="hint-edit">Time saved</div><div style="font-weight:700;color:var(--green);font-size:16px">${yrs(monthsSaved)}</div></div>
+        <div><div class="hint-edit">Interest saved</div><div style="font-weight:700;color:var(--green);font-size:16px">${fmtMoney(interestSaved, 'EUR')}</div></div>
+      </div>` : `<div class="hint-edit" style="margin-top:10px">Enter an extra monthly amount to see how much sooner the mortgage clears and how much interest you save.</div>`}
+    </div>
+    ${g.notes ? `<div class="gnotes" style="margin-top:12px">${g.notes}</div>` : ''}`;
+
+  const series = [{ pts: balanceSeries(g.balance, r, g.monthlyRepayment), color: '#8b949e', dash: extra > 0, fill: !extra }];
+  if (extra > 0) series.push({ pts: balanceSeries(g.balance, r, g.monthlyRepayment + extra), color: '#3fb950', fill: true });
+  const xMax = Math.max(...series.flatMap(s => s.pts.map(p => p.m)));
+  document.getElementById('mort-chart').innerHTML = lineChartSVG(series, xMax);
+  document.getElementById('mort-chart-note').innerHTML = extra > 0
+    ? `<span style="color:var(--muted)">Grey dashed = current schedule · <b style="color:var(--green)">green</b> = with €${extra}/mo extra. The gap between the lines is money staying in your pocket.</span>`
+    : 'Balance on the current schedule. Add an overpayment in the calculator to compare trajectories.';
+}
 
 function renderGoals() {
-  const goals = DATA.goals || [];
-  if (!goals.length) return;
-  document.getElementById('goals-card').style.display = '';
-  document.getElementById('goals').innerHTML = goals.map((g, gi) => {
+  const goals = (DATA.goals || []).filter(g => g.type !== 'mortgage');
+  const g0 = mortgageGoal();
+  let html = '';
+  if (g0) {
+    const r = (g0.rate / 100) / 12;
+    const months = monthsToClear(g0.balance, r, g0.monthlyRepayment + (g0.overpay || 0));
+    html += `<div class="goal row editable" style="display:flex" onclick="showTab('mortgage')">
+      <div><div class="name">Pay off the mortgage</div><div class="detail">${fmtMoney(g0.balance, 'EUR')} at ${g0.rate}% — mortgage-free ${payoffLabel(months)}</div></div>
+      <div class="right"><span class="badge ok">Mortgage tab →</span></div></div>`;
+  }
+  html += goals.map((g) => {
+    const gi = DATA.goals.indexOf(g);
     if (g.type === 'checklist') {
       const done = g.steps.filter(s => s.done).length;
       const pct = goalPct(done / g.steps.length);
@@ -447,44 +740,6 @@ function renderGoals() {
         <div class="gname"><span>${g.title}</span><span class="pct">${done}/${g.steps.length} steps</span></div>
         <div class="bar"><i style="width:${pct}%"></i></div>
         ${g.steps.map((s, si) => `<label class="check ${s.done ? 'done' : ''}"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleStep(${gi},${si},this.checked)"><span>${s.label}</span></label>`).join('')}
-        ${g.notes ? `<div class="gnotes">${g.notes}</div>` : ''}
-      </div>`;
-    }
-    if (g.type === 'mortgage') {
-      const r = (g.rate / 100) / 12;
-      const monthsToClear = (bal, pay) => {
-        if (pay <= bal * r) return Infinity;
-        return Math.log(pay / (pay - bal * r)) / Math.log(1 + r);
-      };
-      const base = monthsToClear(g.balance, g.monthlyRepayment);
-      const extra = g.overpay || 0;
-      const withX = monthsToClear(g.balance, g.monthlyRepayment + extra);
-      const baseInterest = g.monthlyRepayment * base - g.balance;
-      const withInterest = (g.monthlyRepayment + extra) * withX - g.balance;
-      const now = new Date();
-      const payoff = m => isFinite(m) ? new Date(now.getFullYear(), now.getMonth() + Math.ceil(m), 1).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' }) : '—';
-      const monthsSaved = isFinite(base) && isFinite(withX) ? Math.round(base - withX) : 0;
-      const interestSaved = isFinite(baseInterest) && isFinite(withInterest) ? baseInterest - withInterest : 0;
-      const yrs = m => `${Math.floor(m / 12)}y ${Math.round(m % 12)}m`;
-      const cap10 = Math.round((g.balance * 0.10) / 12);
-      return `<div class="goal">
-        <div class="gname"><span>${g.title}</span><span class="pct">${g.rate}% ${g.rateNote || ''}</span></div>
-        <div class="meta" style="margin:6px 0 10px">
-          <span>balance <b style="color:var(--text)">${fmtMoney(g.balance, 'EUR')}</b></span>
-          <span><b style="color:var(--text)">${fmtMoney(g.monthlyRepayment, 'EUR')}</b>/mo</span>
-          <span>${g.lender}</span>
-        </div>
-        <div style="background:var(--panel-2);border-radius:10px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-            <span style="font-size:13px">Overpay extra <b>€</b> <input class="units-input" type="number" min="0" step="50" value="${extra}" onchange="updateGoal(${gi},'overpay',this.value)"> /mo</span>
-            <span class="hint-edit">penalty-free up to ~€${cap10.toLocaleString()}/mo</span>
-          </div>
-          ${extra > 0 ? `<div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap">
-            <div><div class="hint-edit">Mortgage-free</div><div style="font-weight:700;color:var(--green)">${payoff(withX)}</div><div class="hint-edit">was ${payoff(base)}</div></div>
-            <div><div class="hint-edit">Time saved</div><div style="font-weight:700;color:var(--green)">${yrs(monthsSaved)}</div></div>
-            <div><div class="hint-edit">Interest saved</div><div style="font-weight:700;color:var(--green)">${fmtMoney(interestSaved, 'EUR')}</div></div>
-          </div>` : `<div class="hint-edit" style="margin-top:8px">Currently mortgage-free ${payoff(base)} · ~${fmtMoney(baseInterest, 'EUR')} interest left to pay. Enter an overpayment to see the effect.</div>`}
-        </div>
         ${g.notes ? `<div class="gnotes">${g.notes}</div>` : ''}
       </div>`;
     }
@@ -500,27 +755,39 @@ function renderGoals() {
       </div>
     </div>`;
   }).join('');
+  document.getElementById('goals').innerHTML = html;
 }
 
-function updateGoal(gi, field, value) {
-  DATA.goals[gi][field] = value === '' ? null : parseFloat(value);
-  renderGoals();
-  save();
-}
-function toggleStep(gi, si, checked) {
-  DATA.goals[gi].steps[si].done = checked;
-  renderGoals();
-  save();
-}
+function renderOverview() {
+  const inEur = monthlyEur(DATA.income || []);
+  const outEur = monthlyEur(DATA.bills || []) + monthlyEur(DATA.subscriptions || []);
+  const net = inEur - outEur;
+  const g = mortgageGoal();
+  let mortFree = '—';
+  if (g) mortFree = payoffLabel(monthsToClear(g.balance, (g.rate / 100) / 12, g.monthlyRepayment + (g.overpay || 0)));
+  const pGoal = (DATA.goals || []).find(x => x.type === 'portfolio');
+  const pPct = pGoal && pGoal.target ? goalPct(portfolioUsd() / pGoal.target) : null;
+  const up30 = upcomingItems(30);
+  const knownOut = sumByCurrency(up30.map(u => ({ ...u, frequency: 'monthly' })));
 
-function monthlyEur(items) {
-  let t = 0;
-  for (const it of items) {
-    if (!it.amount || (it.currency || 'EUR') !== 'EUR') continue;
-    const f = it.frequency || 'monthly';
-    t += f === 'bimonthly' ? it.amount / 2 : f === 'annual' ? it.amount / 12 : f === 'variable' ? 0 : it.amount;
-  }
-  return t;
+  document.getElementById('ov-stats').innerHTML = [
+    ['Net / month', (net >= 0 ? '+' : '') + fmtEur(net), 'income minus bills & subs', 'bills', net >= 0 ? 'var(--green)' : 'var(--red)'],
+    ['Mortgage-free', mortFree, g && g.overpay ? `with €${g.overpay}/mo extra` : 'current schedule', 'mortgage', 'var(--text)'],
+    ['Next 30 days', knownOut || '—', 'known outgoings', 'bills', 'var(--text)'],
+    ['Portfolio goal', pPct != null ? pPct + '%' : '—', pGoal ? 'of ' + fmtUsd(pGoal.target) : '', 'goals', 'var(--accent)'],
+  ].map(s => `<div class="stat" onclick="showTab('${s[3]}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')showTab('${s[3]}')">
+      <div class="sl">${s[0]}</div><div class="sv" style="color:${s[4]}">${s[1]}</div><div class="sd">${s[2]}</div></div>`).join('');
+
+  renderList('ov-upcoming', upcomingItems(14).slice(0, 5), u => {
+    const d = new Date(u._next + 'T00:00:00');
+    return `<div class="row">
+      <div><div class="name">${u.provider}</div><div class="detail">${u.kind || ''}</div></div>
+      <div class="right"><div class="amt">${u.amount ? fmtMoney(u.amount, u.currency) : 'amount tbc'}</div>
+        <div class="detail">${d.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' })} ${dueBadge(daysUntil(u._next))}</div></div>
+    </div>`;
+  });
+  document.getElementById('ov-upcoming').insertAdjacentHTML('beforeend',
+    `<div class="total-line"><span><a style="color:var(--accent);cursor:pointer" onclick="showTab('bills')">See all bills →</a></span><span></span></div>`);
 }
 
 function renderCashflow() {
@@ -531,18 +798,20 @@ function renderCashflow() {
   const outEur = monthlyEur(DATA.bills || []) + monthlyEur(DATA.subscriptions || []);
   const net = inEur - outEur;
   const netCls = net >= 0 ? 'var(--green)' : 'var(--red)';
+  const maxV = Math.max(inEur, outEur) || 1;
   document.getElementById('cashflow-summary').innerHTML = `
-    <div class="holding" style="border-top:none;padding-top:0">
-      <div><div class="name">Money in</div><div class="detail">recurring EUR income</div></div>
-      <div class="value" style="color:var(--green)">${fmtEur(inEur)}</div>
-    </div>
-    <div class="holding">
-      <div><div class="name">Money out</div><div class="detail">EUR bills + subscriptions (excl. US$ & variable)</div></div>
-      <div class="value">${fmtEur(outEur)}</div>
-    </div>
-    <div class="holding">
-      <div><div class="name" style="color:${netCls}">Net each month</div><div class="detail">before transfers & one-offs</div></div>
-      <div class="value" style="color:${netCls}">${net >= 0 ? '+' : ''}${fmtEur(net)}</div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--muted);width:32px">In</span>
+        <div style="flex:1;height:14px;background:var(--panel-2);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${inEur / maxV * 100}%;background:var(--green);border-radius:999px"></i></div>
+        <b style="font-size:13px;font-variant-numeric:tabular-nums">${fmtEur(inEur)}</b>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;color:var(--muted);width:32px">Out</span>
+        <div style="flex:1;height:14px;background:var(--panel-2);border-radius:999px;overflow:hidden"><i style="display:block;height:100%;width:${outEur / maxV * 100}%;background:var(--red);border-radius:999px"></i></div>
+        <b style="font-size:13px;font-variant-numeric:tabular-nums">${fmtEur(outEur)}</b>
+      </div>
+      <div class="total-line"><span>Net each month <span class="hint-edit">(before transfers & one-offs)</span></span><b style="color:${netCls}">${net >= 0 ? '+' : ''}${fmtEur(net)}</b></div>
     </div>`;
   document.getElementById('income').innerHTML = income.map((s, i) => `<div class="row editable" onclick="openEditor('income',${i})">
       <div><div class="name">${s.source}</div><div class="detail">${[s.type, s.notes].filter(Boolean).join(' · ')}</div></div>
@@ -550,28 +819,15 @@ function renderCashflow() {
     </div>`).join('');
 }
 
-function sumByCurrency(items) {
-  const totals = {};
-  for (const it of items) {
-    if (!it.amount || (it.frequency || 'monthly') !== 'monthly') continue;
-    const ccy = it.currency || 'EUR';
-    totals[ccy] = (totals[ccy] || 0) + it.amount;
-  }
-  return Object.entries(totals).map(([ccy, n]) => fmtMoney(n, ccy)).join(' + ');
-}
-
-function renderList(id, items, mapper) {
-  const el = document.getElementById(id);
-  el.innerHTML = items && items.length ? items.map(mapper).join('') : '<div class="empty">Nothing here yet.</div>';
-}
-
 function render() {
   const now = new Date();
   document.getElementById('today').textContent = now.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  document.getElementById('snapshot-banner').innerHTML = `This is the family's <b>live dashboard</b> — investment prices update automatically with the market, and <b>anything either of you edits saves for both of you</b>. Protected end-to-end by the household password.`;
 
   renderHoldings();
+  renderInvestCharts();
+  renderMortgage();
   renderGoals();
+  renderOverview();
   renderCashflow();
 
   if (DATA.alerts && DATA.alerts.length) {
@@ -579,6 +835,8 @@ function render() {
     document.getElementById('alerts').innerHTML = DATA.alerts.map(a => `<div class="row">
         <div><div class="name">${a.title}</div><div class="detail">${a.detail}</div></div>
       </div>`).join('');
+  } else {
+    document.getElementById('alerts-card').style.display = 'none';
   }
 
   if (DATA.opportunities && DATA.opportunities.length) {
@@ -600,14 +858,7 @@ function render() {
   if (monthly) document.getElementById('bills').insertAdjacentHTML('beforeend',
     `<div class="total-line"><span>Monthly bills total (known amounts)</span><b>${monthly}</b></div>`);
 
-  const upcoming = [
-    ...(DATA.bills || []).map(b => ({ ...b, kind: b.category })),
-    ...(DATA.subscriptions || []).map(s => ({ ...s, kind: 'subscription' })),
-  ]
-    .map(it => ({ ...it, _next: it.nextDue || nextDue(it.dueDay) }))
-    .filter(it => { const d = daysUntil(it._next); return d != null && d >= 0 && d <= 30; })
-    .sort((a, b) => daysUntil(a._next) - daysUntil(b._next));
-  renderList('upcoming', upcoming, u => {
+  renderList('upcoming', upcomingItems(30), u => {
     const d = new Date(u._next + 'T00:00:00');
     return `<div class="row">
       <div><div class="name">${u.provider}</div><div class="detail">${u.kind || ''}</div></div>
@@ -615,7 +866,7 @@ function render() {
         <div class="detail">${d.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' })} ${dueBadge(daysUntil(u._next))}</div></div>
     </div>`;
   });
-  const upTotal = sumByCurrency(upcoming.map(u => ({ ...u, frequency: 'monthly' })));
+  const upTotal = sumByCurrency(upcomingItems(30).map(u => ({ ...u, frequency: 'monthly' })));
   if (upTotal) document.getElementById('upcoming').insertAdjacentHTML('beforeend',
     `<div class="total-line"><span>Known outgoings, next 30 days</span><b>${upTotal}</b></div>`);
 
@@ -650,15 +901,29 @@ function render() {
   if (subMonthly) document.getElementById('subscriptions').insertAdjacentHTML('beforeend',
     `<div class="total-line"><span>Monthly subscriptions total (known amounts)</span><b>${subMonthly}</b></div>`);
 
-  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance (stocks/ETFs) & CoinGecko (crypto), refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit, or use the add links in each card — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext.';
+  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance & CoinGecko, refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext.';
 }
 
 function updateHolding(i, field, value) {
   DATA.holdings[i][field] = value === '' ? null : parseFloat(value);
-  renderHoldings(); renderGoals();
-  save();
+  render(); save();
+}
+function updateGoal(gi, field, value) {
+  DATA.goals[gi][field] = value === '' ? null : parseFloat(value);
+  render(); save();
+}
+function updateMortgage(field, value) {
+  const g = mortgageGoal();
+  if (!g) return;
+  g[field] = value === '' ? null : parseFloat(value);
+  render(); save();
+}
+function toggleStep(gi, si, checked) {
+  DATA.goals[gi].steps[si].done = checked;
+  render(); save();
 }
 
+// ---- generic add/edit/delete editor ----
 const SCHEMAS = {
   holdings: {
     title: 'Investment', arr: () => DATA.holdings,
