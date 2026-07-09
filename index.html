@@ -179,6 +179,29 @@
   .k-alert { color: var(--red); }
   .k-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 2vmin; border-top: 1px solid var(--border); padding-top: 2vmin; }
 
+  /* kiosk personas: music (public) vs family (finances) */
+  body.k-music .k-fam { display: none !important; }
+  body.k-family .k-mus { display: none !important; }
+  .k-radio { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3vmin; }
+  .k-radio .k-station-name { font-size: 4.4vmin; font-weight: 700; letter-spacing: -0.02em; }
+  .k-play { width: 12vmin; height: 12vmin; border-radius: 50%; background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .15s; }
+  .k-play:hover { border-color: var(--accent); }
+  .k-play svg { width: 5vmin; height: 5vmin; }
+  .k-stations { display: flex; flex-wrap: wrap; gap: 1.4vmin; justify-content: center; max-width: 44vmin; }
+  .k-stations .chip { font-size: 1.9vmin; padding: 1vmin 2vmin; }
+  .k-familybtn { position: absolute; bottom: 3vmin; right: 3vmin; background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 1.2vmin 2.4vmin; font-size: 1.9vmin; cursor: pointer; display: inline-flex; align-items: center; gap: 1vmin; font-family: inherit; }
+  .k-familybtn:hover { color: var(--text); border-color: var(--muted); }
+
+  #face-overlay { position: fixed; inset: 0; background: rgba(13,17,23,.94); z-index: 70; display: none; align-items: center; justify-content: center; }
+  #face-overlay.open { display: flex; }
+  .face-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
+  .face-card video { width: 100%; max-width: 320px; border-radius: 10px; background: #000; transform: scaleX(-1); }
+  .face-card h3 { font-size: 17px; margin-bottom: 10px; }
+  #face-status { color: var(--muted); font-size: 13px; margin: 12px 0; min-height: 18px; }
+  .face-card input { width: 100%; background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px 12px; font-size: 15px; margin: 8px 0; text-align: center; }
+
   @media (max-width: 640px) {
     .wrap { padding: 16px 14px 84px; }
     .networth { font-size: 30px; }
@@ -370,32 +393,51 @@
 <footer id="footer"></footer>
 </div>
 
-<div id="kiosk-page" onclick="exitKiosk()" title="Tap to open the full dashboard">
+<div id="kiosk-page">
   <div>
     <div class="k-clock" id="k-clock">--:--</div>
     <div class="k-date" id="k-date"></div>
     <div class="k-weather" id="k-weather"></div>
-    <div style="margin-top:3.2vmin">
+    <div style="margin-top:3.2vmin" class="k-fam">
       <div class="k-h">What's on</div>
       <div id="k-whatson"></div>
     </div>
   </div>
-  <div class="k-networth">
+  <div class="k-networth k-fam">
     <div class="k-nv" id="k-nv">—</div>
     <div class="k-ne" id="k-ne"></div>
     <div class="k-live"><span class="live-dot"></span><span id="k-live"></span></div>
   </div>
-  <div>
+  <div class="k-radio k-mus">
+    <div class="k-station-name" id="k-station-name">Radio</div>
+    <div class="k-play" id="k-play" onclick="togglePlay()" role="button" aria-label="Play or pause"></div>
+    <div class="k-stations" id="k-stations"></div>
+  </div>
+  <div class="k-fam">
     <div class="k-h">Coming up</div>
     <div id="k-upcoming"></div>
   </div>
-  <div>
+  <div class="k-fam">
     <div class="k-h" id="k-right-title">Needs attention</div>
     <div id="k-right"></div>
   </div>
   <div class="k-foot">
-    <span id="k-foot-left"></span>
-    <span id="k-foot-right"></span>
+    <span id="k-foot-left" class="k-fam"></span>
+    <span class="k-mus" style="color:var(--muted)" id="k-music-foot"></span>
+    <span class="k-fam"><a style="color:var(--accent);cursor:pointer" onclick="exitKiosk()">Open full dashboard</a> · <a style="color:var(--muted);cursor:pointer" onclick="openEnroll()">Faces</a> · <a style="color:var(--muted);cursor:pointer" onclick="toMusicMode()">Done</a></span>
+  </div>
+  <button class="k-familybtn k-mus" onclick="requestFamily()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+    Family
+  </button>
+</div>
+
+<div id="face-overlay">
+  <div class="face-card">
+    <h3 id="face-title">Looking for you…</h3>
+    <video id="face-video" autoplay muted playsinline></video>
+    <div id="face-status"></div>
+    <div id="face-actions"></div>
   </div>
 </div>
 
@@ -758,6 +800,223 @@ function renderWhatsOn() {
   if (src) src.textContent = (DATA && DATA.settings && DATA.settings.calendarIcs) ? 'family calendar' : 'Irish holidays — add your calendar in Settings';
 }
 
+// ---- radio (music mode) — plays through whatever speakers the kiosk device uses ----
+const STATIONS = [
+  { name: 'Classic FM', url: 'https://media-ice.musicradio.com/ClassicFMMP3' },
+  { name: 'Radio Paradise', url: 'https://stream.radioparadise.com/mp3-128' },
+  { name: 'Heart', url: 'https://media-ice.musicradio.com/HeartLondonMP3' },
+  { name: 'Capital', url: 'https://media-ice.musicradio.com/CapitalMP3' },
+  { name: 'Smooth', url: 'https://media-ice.musicradio.com/SmoothLondonMP3' },
+  { name: 'Gold', url: 'https://media-ice.musicradio.com/GoldMP3' },
+  { name: 'LBC — talk', url: 'https://media-ice.musicradio.com/LBCUKMP3' },
+];
+const AUDIO = new Audio();
+AUDIO.preload = 'none';
+let stationIdx = Math.min(+(localStorage.getItem('kiosk-station') || 0), STATIONS.length - 1);
+let radioPlaying = false;
+
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>';
+
+function renderRadio() {
+  const nameEl = document.getElementById('k-station-name');
+  if (!nameEl) return;
+  nameEl.textContent = STATIONS[stationIdx].name;
+  document.getElementById('k-play').innerHTML = radioPlaying ? ICON_PAUSE : ICON_PLAY;
+  document.getElementById('k-stations').innerHTML = STATIONS.map((s, i) =>
+    `<button class="chip ${i === stationIdx ? 'on' : ''}" onclick="playStation(${i})">${s.name}</button>`).join('');
+  document.getElementById('k-music-foot').textContent = radioPlaying
+    ? 'Playing ' + STATIONS[stationIdx].name
+    : 'Tap play for radio · Family for the dashboard';
+}
+function playStation(i) {
+  stationIdx = i;
+  localStorage.setItem('kiosk-station', String(i));
+  AUDIO.src = STATIONS[i].url;
+  AUDIO.play().then(() => { radioPlaying = true; renderRadio(); })
+    .catch(() => { radioPlaying = false; renderRadio(); });
+  renderRadio();
+}
+function togglePlay() {
+  if (radioPlaying) { AUDIO.pause(); AUDIO.src = ''; radioPlaying = false; renderRadio(); }
+  else playStation(stationIdx);
+}
+
+// ---- kiosk personas: music (public curtain) vs family (finances) ----
+// Face recognition is a display curtain for casual privacy, not the encryption:
+// it runs entirely on this device (frames never leave it) and has a password fallback.
+let lastPresence = 0;
+const FAMILY_IDLE_MS = 5 * 60 * 1000;
+
+function toMusicMode() {
+  document.body.classList.add('k-music');
+  document.body.classList.remove('k-family');
+  renderRadio();
+}
+function toFamilyMode() {
+  document.body.classList.add('k-family');
+  document.body.classList.remove('k-music');
+  lastPresence = Date.now();
+  renderKiosk();
+}
+function familyIdleCheck() {
+  if (document.body.classList.contains('k-family') && Date.now() - lastPresence > FAMILY_IDLE_MS) toMusicMode();
+}
+
+// ---- on-device face recognition (lazy-loaded; ~6 MB of models, kiosk only) ----
+const FACE_LIB = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/dist/face-api.js';
+const FACE_MODELS = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.15/model';
+let facePromise = null, camStream = null, scanTimer = null;
+
+function enrolledFaces() { try { return JSON.parse(localStorage.getItem('kiosk-faces') || '[]'); } catch (e) { return []; } }
+function saveFaces(f) { localStorage.setItem('kiosk-faces', JSON.stringify(f)); }
+
+function loadFaceApi() {
+  if (facePromise) return facePromise;
+  facePromise = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = FACE_LIB; s.onload = res; s.onerror = () => rej(new Error('face lib failed'));
+    document.head.appendChild(s);
+  }).then(() => Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODELS),
+    faceapi.nets.faceLandmark68TinyNet.loadFromUri(FACE_MODELS),
+    faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODELS),
+  ]));
+  return facePromise;
+}
+async function startCamera() {
+  if (camStream) return true;
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 400, facingMode: 'user' } });
+    document.getElementById('face-video').srcObject = camStream;
+    return true;
+  } catch (e) { camStream = null; return false; }
+}
+function stopCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+}
+async function scanOnce() {
+  const video = document.getElementById('face-video');
+  if (!camStream || video.readyState < 2) return null;
+  const det = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
+    .withFaceLandmarks(true).withFaceDescriptor();
+  if (!det) return null;
+  let best = null, bestDist = 0.5; // standard face-api match threshold
+  for (const f of enrolledFaces()) {
+    const d = faceapi.euclideanDistance(det.descriptor, new Float32Array(f.desc));
+    if (d < bestDist) { bestDist = d; best = f.label; }
+  }
+  return best;
+}
+async function startPresenceEngine() {
+  if (!enrolledFaces().length) return;
+  try {
+    await loadFaceApi();
+    if (!(await startCamera())) return;
+    scanTimer = setInterval(async () => {
+      if (!document.body.classList.contains('kiosk')) return;
+      try {
+        const who = await scanOnce();
+        if (who) {
+          lastPresence = Date.now();
+          if (document.body.classList.contains('k-music')) toFamilyMode();
+        }
+      } catch (e) {}
+    }, 4000);
+  } catch (e) {}
+}
+function stopPresenceEngine() { if (scanTimer) { clearInterval(scanTimer); scanTimer = null; } stopCamera(); }
+
+// ---- family gate (face first, password fallback) ----
+function faceOverlay(open) { document.getElementById('face-overlay').classList.toggle('open', !!open); }
+function gatePassword() {
+  document.getElementById('face-title').textContent = 'Household password';
+  document.getElementById('face-video').style.display = 'none';
+  document.getElementById('face-status').textContent = '';
+  document.getElementById('face-actions').innerHTML = `
+    <input id="gate-pw" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')gateCheckPw()">
+    <button class="btn primary" style="width:100%" onclick="gateCheckPw()">Unlock finances</button>
+    <button class="btn danger" onclick="faceOverlay(false)">Cancel</button>`;
+  setTimeout(() => document.getElementById('gate-pw')?.focus(), 50);
+}
+async function gateCheckPw() {
+  const pw = document.getElementById('gate-pw').value;
+  document.getElementById('face-status').textContent = 'Checking…';
+  const token = await deriveAuthToken(pw);
+  if (token === AUTH_TOKEN) { faceOverlay(false); toFamilyMode(); }
+  else document.getElementById('face-status').textContent = 'Not the right password.';
+}
+async function requestFamily() {
+  faceOverlay(true);
+  const faces = enrolledFaces();
+  if (!faces.length) { gatePassword(); return; }
+  document.getElementById('face-title').textContent = 'Looking for you…';
+  document.getElementById('face-video').style.display = '';
+  document.getElementById('face-status').textContent = 'Loading face recognition…';
+  document.getElementById('face-actions').innerHTML = `
+    <button class="btn" onclick="gatePassword()">Use password instead</button>
+    <button class="btn danger" onclick="faceOverlay(false)">Cancel</button>`;
+  try {
+    await loadFaceApi();
+    if (!(await startCamera())) { document.getElementById('face-status').textContent = 'No camera — use the password.'; return; }
+    document.getElementById('face-status').textContent = 'Look at the camera…';
+    for (let i = 0; i < 8; i++) {
+      if (!document.getElementById('face-overlay').classList.contains('open')) return;
+      const who = await scanOnce();
+      if (who) {
+        document.getElementById('face-status').textContent = 'Hi ' + who + '!';
+        setTimeout(() => { faceOverlay(false); toFamilyMode(); }, 500);
+        return;
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    document.getElementById('face-status').textContent = "Didn't recognise you — try the password.";
+  } catch (e) {
+    document.getElementById('face-status').textContent = 'Face recognition unavailable — use the password.';
+  }
+}
+
+// ---- enrollment (family mode only; stays on this device) ----
+async function openEnroll() {
+  faceOverlay(true);
+  document.getElementById('face-title').textContent = 'Enroll a face';
+  document.getElementById('face-video').style.display = '';
+  const list = () => enrolledFaces().map(f => f.label).join(', ') || 'none yet';
+  document.getElementById('face-status').textContent = 'Enrolled: ' + list();
+  document.getElementById('face-actions').innerHTML = `
+    <input id="enroll-name" type="text" placeholder="Name (Tim or Fiona)" value="${enrolledFaces().length ? 'Fiona' : 'Tim'}">
+    <button class="btn primary" style="width:100%" onclick="captureFace()">Capture (takes 3 shots)</button>
+    <button class="btn" onclick="saveFaces([]); document.getElementById('face-status').textContent='All faces cleared on this device.'">Clear all faces</button>
+    <button class="btn danger" onclick="faceOverlay(false); startPresenceEngine()">Done</button>`;
+  try {
+    await loadFaceApi();
+    if (!(await startCamera())) document.getElementById('face-status').textContent = 'No camera found on this device.';
+  } catch (e) {
+    document.getElementById('face-status').textContent = 'Could not load face recognition.';
+  }
+}
+async function captureFace() {
+  const name = (document.getElementById('enroll-name').value || '').trim();
+  if (!name) { document.getElementById('face-status').textContent = 'Give the face a name first.'; return; }
+  const st = document.getElementById('face-status');
+  const faces = enrolledFaces().filter(f => f.label !== name);
+  const got = [];
+  for (let i = 1; i <= 3; i++) {
+    st.textContent = `Hold still — shot ${i} of 3…`;
+    let det = null;
+    for (let tries = 0; tries < 5 && !det; tries++) {
+      det = await faceapi.detectSingleFace(document.getElementById('face-video'), new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
+        .withFaceLandmarks(true).withFaceDescriptor();
+      if (!det) await new Promise(r => setTimeout(r, 500));
+    }
+    if (!det) { st.textContent = 'No face found — better light and try again.'; return; }
+    got.push({ label: name, desc: Array.from(det.descriptor) });
+    await new Promise(r => setTimeout(r, 700));
+  }
+  saveFaces([...faces, ...got]);
+  st.textContent = name + ' enrolled on this device ✓ (' + enrolledFaces().map(f => f.label).filter((v, i, a) => a.indexOf(v) === i).join(', ') + ')';
+}
+
 function renderKiosk() {
   if (!DATA) return;
   const now = new Date();
@@ -801,28 +1060,34 @@ function renderKiosk() {
     const months = monthsToClear(g.balance, (g.rate / 100) / 12, g.monthlyRepayment + (g.overpay || 0));
     document.getElementById('k-foot-left').textContent = `Mortgage-free ${payoffLabel(months)}${g.overpay ? ` · overpaying €${g.overpay}/mo` : ''}`;
   }
-  document.getElementById('k-foot-right').textContent = 'Tap anywhere for the full dashboard';
 }
 
 function enterKiosk() {
   document.body.classList.add('kiosk');
   try { history.replaceState(null, '', '#kiosk'); } catch (e) {}
+  toMusicMode(); // curtain down by default — faces or password raise it
   renderKiosk();
   renderKioskWeather();
   renderWhatsOn();
+  renderRadio();
   fetchWeather();
   fetchCal();
+  startPresenceEngine();
   kioskTimers = [
     setInterval(renderKiosk, 30 * 1000),
     setInterval(fetchWeather, 30 * 60 * 1000),
     setInterval(fetchCal, 30 * 60 * 1000),
     setInterval(pollData, 2 * 60 * 1000),
+    setInterval(familyIdleCheck, 30 * 1000),
   ];
+  document.getElementById('kiosk-page').addEventListener('pointerdown', () => { lastPresence = Date.now(); });
 }
 function exitKiosk() {
-  document.body.classList.remove('kiosk');
+  document.body.classList.remove('kiosk', 'k-music', 'k-family');
   kioskTimers.forEach(clearInterval);
   kioskTimers = [];
+  stopPresenceEngine();
+  faceOverlay(false);
   showTab('overview');
   render();
 }
