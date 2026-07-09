@@ -151,6 +151,30 @@
   .lock-card .btn { width: 100%; }
   #pw-error { color: var(--red); font-size: 12.5px; margin-top: 12px; min-height: 16px; }
 
+  /* kiosk — glanceable wall-display layout */
+  #kiosk-page { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 60; padding: 4vmin 5vmin; cursor: pointer;
+    color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    grid-template-columns: 1.15fr 1fr; grid-template-rows: auto 1fr auto; gap: 2vmin 5vmin; }
+  body.kiosk #kiosk-page { display: grid; }
+  body.kiosk .wrap, body.kiosk .modal-backdrop { display: none; }
+  .k-clock { font-size: 13vmin; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .k-date { font-size: 3.2vmin; color: var(--muted); margin-top: 1vmin; }
+  .k-weather { font-size: 2.8vmin; color: var(--text); margin-top: 2vmin; line-height: 1.6; }
+  .k-weather .k-cond { color: var(--muted); }
+  .k-networth { text-align: right; }
+  .k-networth .k-nv { font-size: 7.5vmin; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .k-networth .k-ne { font-size: 2.6vmin; color: var(--muted); margin-top: 0.6vmin; }
+  .k-networth .k-live { font-size: 2vmin; color: var(--muted); margin-top: 1vmin; }
+  .k-h { font-size: 2.2vmin; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin-bottom: 1.6vmin; }
+  .k-row { display: flex; justify-content: space-between; align-items: baseline; gap: 2vmin; padding: 1.1vmin 0; border-top: 1px solid var(--border); font-size: 2.7vmin; }
+  .k-row:first-of-type { border-top: none; }
+  .k-row .k-what { font-weight: 600; }
+  .k-row .k-sub { color: var(--muted); font-size: 2.1vmin; }
+  .k-row .k-amt { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .k-row .k-when { color: var(--muted); font-size: 2.1vmin; white-space: nowrap; }
+  .k-alert { color: var(--red); }
+  .k-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 2vmin; border-top: 1px solid var(--border); padding-top: 2vmin; }
+
   @media (max-width: 640px) {
     .wrap { padding: 16px 14px 84px; }
     .networth { font-size: 30px; }
@@ -172,6 +196,7 @@
     <h3>Cashman Household Finances</h3>
     <p>Private to Tim &amp; Fiona. Enter the household password — everything on this page is encrypted until the right password is entered.</p>
     <input id="pw" type="password" autocomplete="current-password" autocapitalize="off" placeholder="Password" onkeydown="if(event.key==='Enter')unlock()">
+    <label class="check" style="justify-content:center;margin-bottom:12px"><input type="checkbox" id="stay-unlocked" checked><span>Stay unlocked on this device</span></label>
     <button class="btn primary" id="unlock-btn" onclick="unlock()">Unlock</button>
     <div id="pw-error"></div>
   </div>
@@ -336,6 +361,31 @@
 <footer id="footer"></footer>
 </div>
 
+<div id="kiosk-page" onclick="exitKiosk()" title="Tap to open the full dashboard">
+  <div>
+    <div class="k-clock" id="k-clock">--:--</div>
+    <div class="k-date" id="k-date"></div>
+    <div class="k-weather" id="k-weather"></div>
+  </div>
+  <div class="k-networth">
+    <div class="k-nv" id="k-nv">—</div>
+    <div class="k-ne" id="k-ne"></div>
+    <div class="k-live"><span class="live-dot"></span><span id="k-live"></span></div>
+  </div>
+  <div>
+    <div class="k-h">Coming up</div>
+    <div id="k-upcoming"></div>
+  </div>
+  <div>
+    <div class="k-h" id="k-right-title">Needs attention</div>
+    <div id="k-right"></div>
+  </div>
+  <div class="k-foot">
+    <span id="k-foot-left"></span>
+    <span id="k-foot-right"></span>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="modal" onclick="if(event.target===this)closeEditor()">
   <div class="modal">
     <h3 id="modal-title"></h3>
@@ -383,6 +433,87 @@ async function fetchEnc() {
   return r.json();
 }
 
+// ---- device auth persistence (IndexedDB can store CryptoKeys securely) ----
+function idb() {
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open('cashman-auth', 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function idbSet(k, v) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('kv', 'readwrite');
+    tx.objectStore('kv').put(v, k);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
+async function idbGet(k) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const rq = db.transaction('kv', 'readonly').objectStore('kv').get(k);
+    rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+  });
+}
+async function idbClear() {
+  try {
+    const db = await idb();
+    await new Promise((res) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').clear(); tx.oncomplete = res; tx.onerror = res; });
+  } catch (e) {}
+}
+async function lockDevice() {
+  await idbClear();
+  location.reload();
+}
+
+let LAST_UPDATED = null;
+
+async function startSession() {
+  document.getElementById('lock').style.display = 'none';
+  if (location.hash === '#kiosk') enterKiosk();
+  else showTab(location.hash.slice(1) || 'overview');
+  render();
+  refreshPrices();
+  setInterval(refreshPrices, 5 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshPrices(); pollData(); } });
+}
+
+// re-fetch shared data so edits from other devices appear (kiosk polls on a timer)
+async function pollData() {
+  if (!AES_KEY) return;
+  try {
+    const e = await fetchEnc();
+    if (e.updated_at && e.updated_at !== LAST_UPDATED) {
+      const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(e.iv) }, AES_KEY, b64(e.ct));
+      DATA = JSON.parse(new TextDecoder().decode(plain)).data;
+      LAST_UPDATED = e.updated_at;
+      SALT_B64 = e.salt;
+      render();
+      if (document.body.classList.contains('kiosk')) renderKiosk();
+    }
+  } catch (err) {}
+}
+
+async function tryAutoUnlock() {
+  try {
+    const saved = await idbGet('auth');
+    if (!saved || !saved.key || !saved.token) return false;
+    if (!ENC) ENC = await fetchEnc();
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(ENC.iv) }, saved.key, b64(ENC.ct));
+    const payload = JSON.parse(new TextDecoder().decode(plain));
+    AES_KEY = saved.key; AUTH_TOKEN = saved.token; SALT_B64 = ENC.salt;
+    LAST_UPDATED = ENC.updated_at || null;
+    DATA = payload.data;
+    if (!DATA.renewals || !DATA.renewals.length) DATA.renewals = DEFAULT_RENEWALS.map(x => ({ ...x }));
+    await startSession();
+    return true;
+  } catch (e) {
+    return false; // stored key no longer matches — fall back to the password screen
+  }
+}
+
 // Seeded once in code — appears for the whole household, saves to the shared
 // store on first edit. Dates are yours to fill in (tap a row).
 const DEFAULT_RENEWALS = [
@@ -419,14 +550,13 @@ async function unlock() {
     const payload = JSON.parse(new TextDecoder().decode(plain));
     AES_KEY = key; SALT_B64 = ENC.salt;
     AUTH_TOKEN = await deriveAuthToken(pw);
+    LAST_UPDATED = ENC.updated_at || null;
     DATA = payload.data;
     if (!DATA.renewals || !DATA.renewals.length) DATA.renewals = DEFAULT_RENEWALS.map(x => ({ ...x }));
-    document.getElementById('lock').style.display = 'none';
-    showTab(location.hash.slice(1) || 'overview');
-    render();
-    refreshPrices();
-    setInterval(refreshPrices, 5 * 60 * 1000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshPrices(); });
+    if (document.getElementById('stay-unlocked').checked) {
+      try { await idbSet('auth', { key: AES_KEY, token: AUTH_TOKEN }); } catch (e) {}
+    }
+    await startSession();
   } catch (e) {
     err.textContent = "That's not the right password — check with Tim and try again.";
     done();
@@ -466,8 +596,96 @@ async function refreshPrices() {
   const coins = [...new Set(DATA.holdings.filter(h => h.kind === 'crypto' && h.ref).map(h => h.ref))];
   try {
     const r = await fetch(BASE + '/prices?stocks=' + encodeURIComponent(stocks.join(',')) + '&coins=' + encodeURIComponent(coins.join(',')), { cache: 'no-store' });
-    if (r.ok) { PRICES = await r.json(); render(); }
+    if (r.ok) {
+      PRICES = await r.json();
+      render();
+      if (document.body.classList.contains('kiosk')) renderKiosk();
+    }
   } catch (e) {}
+}
+
+// ---- kiosk mode (wall display) ----
+let kioskTimers = [];
+const WMO = { 0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Fog', 51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle', 61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain', 71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 80: 'Showers', 81: 'Showers', 82: 'Heavy showers', 85: 'Snow showers', 86: 'Snow showers', 95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm' };
+let WEATHER = null;
+
+async function fetchWeather() {
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.381&longitude=-6.591&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FDublin&forecast_days=1');
+    if (r.ok) { WEATHER = await r.json(); renderKioskWeather(); }
+  } catch (e) {}
+}
+function renderKioskWeather() {
+  const el = document.getElementById('k-weather');
+  if (!WEATHER || !WEATHER.current) { el.textContent = ''; return; }
+  const c = WEATHER.current, d = WEATHER.daily;
+  el.innerHTML = `<b>${Math.round(c.temperature_2m)}°</b> <span class="k-cond">${WMO[c.weather_code] || ''} · feels ${Math.round(c.apparent_temperature)}°</span><br>
+    <span class="k-cond">High ${Math.round(d.temperature_2m_max[0])}° · low ${Math.round(d.temperature_2m_min[0])}° · rain ${d.precipitation_probability_max[0]}%</span>`;
+}
+
+function renderKiosk() {
+  if (!DATA) return;
+  const now = new Date();
+  document.getElementById('k-clock').textContent = now.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('k-date').textContent = now.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long' });
+  const total = portfolioUsd();
+  document.getElementById('k-nv').textContent = fmtUsd(total);
+  const eur = PRICES && PRICES.usdToEur ? total * PRICES.usdToEur : null;
+  document.getElementById('k-ne').textContent = eur ? '≈ ' + fmtEur(eur) + ' invested' : '';
+  document.getElementById('k-live').textContent = PRICES && PRICES.fetchedAt ? 'live · ' + new Date(PRICES.fetchedAt).toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' }) : 'live';
+
+  const ups = upcomingItems(14).slice(0, 6);
+  document.getElementById('k-upcoming').innerHTML = ups.length ? ups.map(u => {
+    const d = new Date(u._next + 'T00:00:00');
+    const days = daysUntil(u._next);
+    return `<div class="k-row">
+      <span class="k-what">${u.provider} <span class="k-sub">${u.kind || ''}</span></span>
+      <span><span class="k-amt">${u.amount ? fmtMoney(u.amount, u.currency) : ''}</span>
+      <span class="k-when"> ${days === 0 ? 'today' : days === 1 ? 'tomorrow' : d.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' })}</span></span>
+    </div>`;
+  }).join('') : '<div class="k-row k-sub">Nothing due in the next fortnight.</div>';
+
+  const alerts = DATA.alerts || [];
+  const dueRenewals = (DATA.renewals || []).filter(r => { const d = daysUntil(r.expiryDate); return d != null && d <= 90; })
+    .sort((a, b) => daysUntil(a.expiryDate) - daysUntil(b.expiryDate));
+  const rt = document.getElementById('k-right-title');
+  const rc = document.getElementById('k-right');
+  if (alerts.length) {
+    rt.textContent = 'Needs attention';
+    rc.innerHTML = alerts.slice(0, 4).map(a => `<div class="k-row"><span class="k-what k-alert">${a.title}</span></div>`).join('');
+  } else if (dueRenewals.length) {
+    rt.textContent = 'Renewals due';
+    rc.innerHTML = dueRenewals.slice(0, 4).map(r => `<div class="k-row"><span class="k-what">${r.label}</span><span class="k-when">${renewBadge(daysUntil(r.expiryDate)).replace(/<[^>]+>/g, '')}</span></div>`).join('');
+  } else {
+    rt.textContent = 'All clear';
+    rc.innerHTML = '<div class="k-row k-sub">No alerts, nothing expiring soon.</div>';
+  }
+
+  const g = mortgageGoal();
+  if (g) {
+    const months = monthsToClear(g.balance, (g.rate / 100) / 12, g.monthlyRepayment + (g.overpay || 0));
+    document.getElementById('k-foot-left').textContent = `Mortgage-free ${payoffLabel(months)}${g.overpay ? ` · overpaying €${g.overpay}/mo` : ''}`;
+  }
+  document.getElementById('k-foot-right').textContent = 'Tap anywhere for the full dashboard';
+}
+
+function enterKiosk() {
+  document.body.classList.add('kiosk');
+  try { history.replaceState(null, '', '#kiosk'); } catch (e) {}
+  renderKiosk();
+  fetchWeather();
+  kioskTimers = [
+    setInterval(renderKiosk, 30 * 1000),
+    setInterval(fetchWeather, 30 * 60 * 1000),
+    setInterval(pollData, 2 * 60 * 1000),
+  ];
+}
+function exitKiosk() {
+  document.body.classList.remove('kiosk');
+  kioskTimers.forEach(clearInterval);
+  kioskTimers = [];
+  showTab('overview');
+  render();
 }
 
 // ---- tabs ----
@@ -1022,7 +1240,7 @@ function render() {
   if (subMonthly) document.getElementById('subscriptions').insertAdjacentHTML('beforeend',
     `<div class="total-line"><span>Monthly subscriptions total (known amounts)</span><b>${subMonthly}</b></div>`);
 
-  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance & CoinGecko, refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext.';
+  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance & CoinGecko, refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext. &nbsp; <a style="color:var(--accent);cursor:pointer" onclick="enterKiosk()">Kiosk mode</a> · <a style="color:var(--accent);cursor:pointer" onclick="lockDevice()">Lock this device</a>';
 }
 
 function updateHolding(i, field, value) {
@@ -1222,9 +1440,14 @@ function deleteCurrent() {
   render();
 }
 
-document.getElementById('pw').focus();
-// pre-fetch the encrypted blob while the password is being typed
-fetchEnc().then(e => { ENC = e; }).catch(() => {});
+// boot: try device auth first; fall back to the password screen
+(async () => {
+  const auto = await tryAutoUnlock().catch(() => false);
+  if (!auto) {
+    document.getElementById('pw').focus();
+    fetchEnc().then(e => { ENC = e; }).catch(() => {});
+  }
+})();
 </script>
 </body>
 </html>
