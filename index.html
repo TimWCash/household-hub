@@ -161,6 +161,10 @@
   .k-date { font-size: 3.2vmin; color: var(--muted); margin-top: 1vmin; }
   .k-weather { font-size: 2.8vmin; color: var(--text); margin-top: 2vmin; line-height: 1.6; }
   .k-weather .k-cond { color: var(--muted); }
+  .k-fc { display: flex; gap: 3vmin; margin-top: 1.8vmin; }
+  .k-fc .fd { text-align: center; font-size: 1.9vmin; color: var(--muted); }
+  .k-fc .fd svg { display: block; margin: 0.6vmin auto; color: var(--accent); }
+  .k-fc .fd b { color: var(--text); font-size: 2.1vmin; }
   .k-networth { text-align: right; }
   .k-networth .k-nv { font-size: 7.5vmin; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
   .k-networth .k-ne { font-size: 2.6vmin; color: var(--muted); margin-top: 0.6vmin; }
@@ -242,6 +246,11 @@
     <div class="card">
       <h2>Coming up <span class="tag">next 14 days</span></h2>
       <div id="ov-upcoming"></div>
+    </div>
+
+    <div class="card">
+      <h2>What's on <span class="tag" id="whatson-src"></span></h2>
+      <div id="ov-whatson"></div>
     </div>
   </div>
 </section>
@@ -366,6 +375,10 @@
     <div class="k-clock" id="k-clock">--:--</div>
     <div class="k-date" id="k-date"></div>
     <div class="k-weather" id="k-weather"></div>
+    <div style="margin-top:3.2vmin">
+      <div class="k-h">What's on</div>
+      <div id="k-whatson"></div>
+    </div>
   </div>
   <div class="k-networth">
     <div class="k-nv" id="k-nv">—</div>
@@ -476,7 +489,10 @@ async function startSession() {
   else showTab(location.hash.slice(1) || 'overview');
   render();
   refreshPrices();
+  fetchCal();
+  fetchWeather();
   setInterval(refreshPrices, 5 * 60 * 1000);
+  setInterval(fetchCal, 30 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshPrices(); pollData(); } });
 }
 
@@ -609,9 +625,34 @@ let kioskTimers = [];
 const WMO = { 0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Fog', 48: 'Fog', 51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle', 61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain', 71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 80: 'Showers', 81: 'Showers', 82: 'Heavy showers', 85: 'Snow showers', 86: 'Snow showers', 95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm' };
 let WEATHER = null;
 
+const escH = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+function wKey(code) {
+  if (code <= 1) return 'sun';
+  if (code === 2) return 'partly';
+  if (code === 3) return 'cloud';
+  if (code === 45 || code === 48) return 'fog';
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow';
+  if (code >= 95) return 'storm';
+  return 'rain';
+}
+function wIcon(code, size) {
+  const cloud = 'M17.5 18H7a4 4 0 1 1 .6-7.96A5.5 5.5 0 0 1 18 8.5a4.75 4.75 0 0 1-.5 9.47';
+  const paths = {
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M3 12h2M19 12h2M4.6 19.4l1.4-1.4M18 6l1.4-1.4"/>',
+    partly: '<circle cx="8" cy="8" r="3"/><path d="M8 2v1.5M2.5 8H4M3.9 3.9l1 1"/><path d="M18 18.5H10a3.5 3.5 0 1 1 .5-6.97A4.5 4.5 0 0 1 19 10.5a4 4 0 0 1-1 8"/>',
+    cloud: `<path d="${cloud}"/>`,
+    fog: '<path d="M4 9h16M3 13h18M5 17h14"/>',
+    rain: `<path d="${cloud}"/><path d="M9 20v1.5M13 20v1.5M11 22.5v.1" stroke-width="2.2"/>`,
+    snow: `<path d="${cloud}"/><path d="M9 20.5h.01M13 20.5h.01M11 22.5h.01" stroke-width="2.6"/>`,
+    storm: `<path d="${cloud}"/><path d="M12 18l-2 3h3l-2 3"/>`,
+  };
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[wKey(code)]}</svg>`;
+}
+
 async function fetchWeather() {
   try {
-    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.381&longitude=-6.591&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FDublin&forecast_days=1');
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.381&longitude=-6.591&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FDublin&forecast_days=5');
     if (r.ok) { WEATHER = await r.json(); renderKioskWeather(); }
   } catch (e) {}
 }
@@ -619,8 +660,102 @@ function renderKioskWeather() {
   const el = document.getElementById('k-weather');
   if (!WEATHER || !WEATHER.current) { el.textContent = ''; return; }
   const c = WEATHER.current, d = WEATHER.daily;
-  el.innerHTML = `<b>${Math.round(c.temperature_2m)}°</b> <span class="k-cond">${WMO[c.weather_code] || ''} · feels ${Math.round(c.apparent_temperature)}°</span><br>
-    <span class="k-cond">High ${Math.round(d.temperature_2m_max[0])}° · low ${Math.round(d.temperature_2m_min[0])}° · rain ${d.precipitation_probability_max[0]}%</span>`;
+  const days = d.time.map((t, i) => {
+    const label = i === 0 ? 'Today' : new Date(t + 'T12:00:00').toLocaleDateString('en-IE', { weekday: 'short' });
+    return `<div class="fd">${label}${wIcon(d.weather_code[i], 26)}<b>${Math.round(d.temperature_2m_max[i])}°</b></div>`;
+  }).join('');
+  el.innerHTML = `<b>${Math.round(c.temperature_2m)}°</b> <span class="k-cond">${WMO[c.weather_code] || ''} · feels ${Math.round(c.apparent_temperature)}° · rain ${d.precipitation_probability_max[0]}%</span>
+    <div class="k-fc">${days}</div>`;
+}
+
+// ---- family calendar (iCal via the API's /cal proxy) ----
+const DEFAULT_ICS = 'https://calendar.google.com/calendar/ical/en.irish%23holiday%40group.v.calendar.google.com/public/basic.ics';
+let CAL_EVENTS = null;
+
+function parseIcsDate(v) {
+  const m = v.match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
+  if (!m) return null;
+  if (m[7] === 'Z') return new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)));
+  return new Date(+m[1], m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+}
+function parseICS(text) {
+  const raw = text.replace(/\r/g, '').split('\n');
+  const lines = [];
+  for (const l of raw) {
+    if ((l.startsWith(' ') || l.startsWith('\t')) && lines.length) lines[lines.length - 1] += l.slice(1);
+    else lines.push(l);
+  }
+  const evs = []; let cur = null;
+  for (const l of lines) {
+    if (l === 'BEGIN:VEVENT') cur = { exdates: [] };
+    else if (l === 'END:VEVENT') { if (cur) evs.push(cur); cur = null; }
+    else if (cur) {
+      const i = l.indexOf(':'); if (i < 0) continue;
+      const key = l.slice(0, i).split(';')[0], val = l.slice(i + 1);
+      if (key === 'SUMMARY') cur.summary = val.replace(/\\,/g, ',').replace(/\\n/g, ' ').trim();
+      else if (key === 'DTSTART') { cur.dtstart = parseIcsDate(val); cur.allDay = !val.includes('T'); }
+      else if (key === 'RRULE') cur.rrule = val;
+      else if (key === 'EXDATE') val.split(',').forEach(v => { const d = parseIcsDate(v); if (d) cur.exdates.push(d.toDateString()); });
+    }
+  }
+  return evs;
+}
+// expand within the window; recurring events support daily/weekly rules (the family staples)
+function expandEvents(evs, windowDays) {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const end = new Date(now.getTime() + windowDays * 86400000);
+  const DOW = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  const out = [];
+  for (const e of evs) {
+    if (!e.dtstart || !e.summary) continue;
+    if (!e.rrule) {
+      if (e.dtstart >= now && e.dtstart < end) out.push({ d: e.dtstart, allDay: e.allDay, summary: e.summary });
+      continue;
+    }
+    const r = Object.fromEntries(e.rrule.split(';').map(p => p.split('=')));
+    if (r.FREQ !== 'WEEKLY' && r.FREQ !== 'DAILY') continue;
+    const interval = +(r.INTERVAL || 1);
+    const until = r.UNTIL ? parseIcsDate(r.UNTIL) : null;
+    const bydays = r.FREQ === 'WEEKLY' ? (r.BYDAY ? r.BYDAY.split(',') : [DOW[e.dtstart.getDay()]]) : null;
+    for (let t = new Date(now); t < end; t = new Date(t.getTime() + 86400000)) {
+      const occ = new Date(t.getFullYear(), t.getMonth(), t.getDate(), e.dtstart.getHours(), e.dtstart.getMinutes());
+      if (occ < e.dtstart || (until && occ > until)) continue;
+      const days = Math.round((occ - e.dtstart) / 86400000);
+      if (r.FREQ === 'DAILY' && days % interval !== 0) continue;
+      if (r.FREQ === 'WEEKLY' && (!bydays.includes(DOW[occ.getDay()]) || Math.floor(days / 7) % interval !== 0)) continue;
+      if (e.exdates.includes(occ.toDateString())) continue;
+      out.push({ d: occ, allDay: e.allDay, summary: e.summary });
+    }
+  }
+  out.sort((a, b) => a.d - b.d);
+  return out;
+}
+async function fetchCal() {
+  const icsUrl = (DATA && DATA.settings && DATA.settings.calendarIcs) || DEFAULT_ICS;
+  try {
+    const r = await fetch(BASE + '/cal?u=' + encodeURIComponent(icsUrl), { cache: 'no-store' });
+    if (!r.ok) throw new Error('cal ' + r.status);
+    CAL_EVENTS = expandEvents(parseICS(await r.text()), 14).slice(0, 6);
+  } catch (e) { CAL_EVENTS = null; }
+  renderWhatsOn();
+}
+function renderWhatsOn() {
+  const fmt = e => ({
+    day: e.d.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric' }),
+    time: e.allDay ? 'all day' : e.d.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' }),
+  });
+  const kEl = document.getElementById('k-whatson');
+  if (kEl) kEl.innerHTML = CAL_EVENTS === null ? '<div class="k-row"><span class="k-sub">Calendar unavailable</span></div>'
+    : CAL_EVENTS.length ? CAL_EVENTS.map(e => { const f = fmt(e);
+        return `<div class="k-row"><span class="k-what">${escH(e.summary)} <span class="k-sub">${f.time}</span></span><span class="k-when">${f.day}</span></div>`; }).join('')
+    : '<div class="k-row"><span class="k-sub">Nothing on in the next fortnight.</span></div>';
+  const oEl = document.getElementById('ov-whatson');
+  if (oEl) oEl.innerHTML = CAL_EVENTS === null ? '<div class="empty">Calendar unavailable — check the address in Settings.</div>'
+    : CAL_EVENTS.length ? CAL_EVENTS.map(e => { const f = fmt(e);
+        return `<div class="row"><div><div class="name">${escH(e.summary)}</div><div class="detail">${f.time}</div></div><div class="right"><div class="amt">${f.day}</div></div></div>`; }).join('')
+    : '<div class="empty">Nothing on in the next fortnight.</div>';
+  const src = document.getElementById('whatson-src');
+  if (src) src.textContent = (DATA && DATA.settings && DATA.settings.calendarIcs) ? 'family calendar' : 'Irish holidays — add your calendar in Settings';
 }
 
 function renderKiosk() {
@@ -673,10 +808,14 @@ function enterKiosk() {
   document.body.classList.add('kiosk');
   try { history.replaceState(null, '', '#kiosk'); } catch (e) {}
   renderKiosk();
+  renderKioskWeather();
+  renderWhatsOn();
   fetchWeather();
+  fetchCal();
   kioskTimers = [
     setInterval(renderKiosk, 30 * 1000),
     setInterval(fetchWeather, 30 * 60 * 1000),
+    setInterval(fetchCal, 30 * 60 * 1000),
     setInterval(pollData, 2 * 60 * 1000),
   ];
 }
@@ -1240,7 +1379,7 @@ function render() {
   if (subMonthly) document.getElementById('subscriptions').insertAdjacentHTML('beforeend',
     `<div class="total-line"><span>Monthly subscriptions total (known amounts)</span><b>${subMonthly}</b></div>`);
 
-  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance & CoinGecko, refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext. &nbsp; <a style="color:var(--accent);cursor:pointer" onclick="enterKiosk()">Kiosk mode</a> · <a style="color:var(--accent);cursor:pointer" onclick="lockDevice()">Lock this device</a>';
+  document.getElementById('footer').innerHTML = 'Live prices from Yahoo Finance & CoinGecko, refreshed every 5 minutes and whenever you return to this tab. Click any investment, bill, subscription or income row to edit — <b>edits save for the whole household</b>. All data is end-to-end encrypted with the household password; the server only ever stores ciphertext. &nbsp; <a style="color:var(--accent);cursor:pointer" onclick="enterKiosk()">Kiosk mode</a> · <a style="color:var(--accent);cursor:pointer" onclick="openEditor(\'settings\',0)">Settings</a> · <a style="color:var(--accent);cursor:pointer" onclick="lockDevice()">Lock this device</a>';
 }
 
 function updateHolding(i, field, value) {
@@ -1316,6 +1455,16 @@ const SCHEMAS = {
       { key: 'expiryDate', label: 'Expiry / due date', type: 'date' },
       { key: 'notes', label: 'Notes', type: 'text', ph: 'where to renew, how long it takes…' },
     ],
+  },
+  settings: {
+    title: 'Settings', noDelete: true,
+    // settings is an object, not a list — transform mutates DATA.settings directly
+    arr: () => [DATA.settings = DATA.settings || {}],
+    fields: [
+      { key: 'calendarIcs', label: 'Family calendar — secret iCal address', type: 'text', ph: 'https://calendar.google.com/calendar/ical/…/basic.ics',
+        hint: 'Google Calendar (on a computer) → Settings → pick your calendar → "Integrate calendar" → copy the Secret address in iCal format. iCloud and Outlook published-calendar links work too. Until set, the dashboard shows Irish public holidays.' },
+    ],
+    transform: (obj) => { DATA.settings = { ...(DATA.settings || {}), ...obj }; setTimeout(fetchCal, 50); return DATA.settings; },
   },
   mortgage: {
     title: 'Mortgage details', arr: () => DATA.goals, noDelete: true,
